@@ -84,6 +84,63 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ============================================================
+    // ALTERNATE IMAGE PREVIEW ON UPLOAD
+    // ============================================================
+    const fileInputAlt = document.getElementById('product_image_alt');
+    const imagePreviewAlt = document.getElementById('image-preview-alt');
+    const uploadPlaceholderAlt = document.getElementById('upload-placeholder-alt');
+    const currentImageAlt = document.getElementById('current-image-alt');
+    const uploadAreaAlt = document.getElementById('image-upload-area-alt');
+
+    if (fileInputAlt && imagePreviewAlt) {
+        fileInputAlt.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Validate file type
+                const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+                if (!validTypes.includes(file.type)) {
+                    alert('Only JPG, JPEG, and PNG files are allowed.');
+                    fileInputAlt.value = '';
+                    return;
+                }
+
+                // Validate file size (2MB)
+                if (file.size > 2 * 1024 * 1024) {
+                    alert('File size must be less than 2MB.');
+                    fileInputAlt.value = '';
+                    return;
+                }
+
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    imagePreviewAlt.src = e.target.result;
+                    imagePreviewAlt.style.display = 'block';
+                    if (uploadPlaceholderAlt) uploadPlaceholderAlt.style.display = 'none';
+                    if (currentImageAlt) currentImageAlt.style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Drag and drop styling
+        if (uploadAreaAlt) {
+            uploadAreaAlt.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                this.classList.add('drag-over');
+            });
+
+            uploadAreaAlt.addEventListener('dragleave', function () {
+                this.classList.remove('drag-over');
+            });
+
+            uploadAreaAlt.addEventListener('drop', function () {
+                this.classList.remove('drag-over');
+            });
+        }
+    }
+
+    // ============================================================
     // DYNAMIC VARIANT SIZE FIELDS (based on category)
     // ============================================================
     const categorySelect = document.getElementById('category_id');

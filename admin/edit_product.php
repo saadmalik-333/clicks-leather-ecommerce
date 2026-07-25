@@ -2,6 +2,7 @@
 /**
  * Clicks Leather — Edit Product
  */
+ob_start();
 $page_title = 'Edit Product';
 require_once __DIR__ . '/includes/header.php';
 
@@ -48,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($price <= 0) $errors[] = 'Price must be greater than 0.';
         if ($category_id <= 0) $errors[] = 'Please select a category.';
 
-        // Handle image upload (optional on edit)
+        // Handle main image upload (optional on edit)
         $image_filename = $product['image_path']; // Keep existing by default
         if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] !== UPLOAD_ERR_NO_FILE) {
             $upload_result = upload_image($_FILES['product_image']);
@@ -71,6 +72,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $image_filename = null;
         }
 
+        // Handle alternate image upload (optional on edit)
+        $image_alt_filename = $product['image_path_alt'] ?? null; // Keep existing by default
+        if (isset($_FILES['product_image_alt']) && $_FILES['product_image_alt']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $upload_result = upload_image($_FILES['product_image_alt']);
+            if ($upload_result['success']) {
+                // Delete old alternate image
+                if ($product['image_path_alt']) {
+                    delete_image($product['image_path_alt']);
+                }
+                $image_alt_filename = $upload_result['filename'];
+            } else {
+                $errors[] = 'Alternate image: ' . $upload_result['message'];
+            }
+        }
+
+        // Handle alternate image removal
+        if (isset($_POST['remove_image_alt']) && $_POST['remove_image_alt'] === '1') {
+            if ($product['image_path_alt']) {
+                delete_image($product['image_path_alt']);
+            }
+            $image_alt_filename = null;
+        }
+
         if (empty($errors)) {
             try {
                 $pdo->beginTransaction();
@@ -79,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $pdo->prepare(
                     "UPDATE products SET naam = :naam, description = :description, price = :price, 
                      category_id = :category_id, has_personalization = :has_personalization, 
-                     image_path = :image_path WHERE id = :id"
+                     image_path = :image_path, image_path_alt = :image_path_alt WHERE id = :id"
                 );
                 $stmt->execute([
                     ':naam'                => $naam,
@@ -88,6 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ':category_id'         => $category_id,
                     ':has_personalization'  => $has_personalization,
                     ':image_path'          => $image_filename,
+                    ':image_path_alt'      => $image_alt_filename,
                     ':id'                  => $product_id
                 ]);
 
@@ -164,7 +189,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="price">Price (Rs.) <span class="required">*</span></label>
+                        <label for="price">Price ($) <span class="required">*</span></label>
                         <input type="number" id="price" name="price" step="0.01" min="0" 
                                value="<?= htmlspecialchars($product['price']) ?>" required>
                     </div>
@@ -206,7 +231,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <h3 class="form-section-title">Product Image</h3>
 
                 <div class="form-group">
-                    <label for="product_image">Upload New Image (JPG, PNG — max 2MB)</label>
+                    <label for="product_image">Main Image (JPG, PNG — max 2MB)</label>
                     <div class="image-upload-area" id="image-upload-area">
                         <input type="file" id="product_image" name="product_image" 
                                accept=".jpg,.jpeg,.png" class="file-input">
@@ -230,6 +255,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                         <?php endif; ?>
                         <img id="image-preview" class="image-preview" style="display:none;" alt="Preview">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="product_image_alt">Hover/Alternate Image (Optional — JPG, PNG — max 2MB)</label>
+                    <div class="image-upload-area" id="image-upload-area-alt">
+                        <input type="file" id="product_image_alt" name="product_image_alt" 
+                               accept=".jpg,.jpeg,.png" class="file-input">
+                        
+                        <?php if ($product['image_path_alt']): ?>
+                            <div class="current-image" id="current-image-alt">
+                                <img src="<?= PUBLIC_URL ?>/uploads/<?= htmlspecialchars($product['image_path_alt']) ?>" 
+                                     alt="Current alternate image">
+                                <label class="remove-image-label">
+                                    <input type="checkbox" name="remove_image_alt" value="1" id="remove-image-alt-checkbox"> 
+                                    Remove current alternate image
+                                </label>
+                            </div>
+                        <?php else: ?>
+                            <div class="upload-placeholder" id="upload-placeholder-alt">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                    <circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/>
+                                </svg>
+                                <p>Click to upload or drag & drop</p>
+                            </div>
+                        <?php endif; ?>
+                        <img id="image-preview-alt" class="image-preview" style="display:none;" alt="Preview">
                     </div>
                 </div>
 

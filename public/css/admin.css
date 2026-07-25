@@ -198,7 +198,7 @@
     align-items: center;
     justify-content: space-between;
     padding: var(--space-md) var(--space-xl);
-    background: rgba(13, 13, 13, 0.9);
+    background: rgba(253, 251, 247, 0.95);
     backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--border-color);
 }

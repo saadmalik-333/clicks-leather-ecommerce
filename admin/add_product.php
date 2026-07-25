@@ -2,6 +2,7 @@
 /**
  * Clicks Leather — Add Product
  */
+ob_start();
 $page_title = 'Add Product';
 require_once __DIR__ . '/includes/header.php';
 
@@ -29,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($price <= 0) $errors[] = 'Price must be greater than 0.';
         if ($category_id <= 0) $errors[] = 'Please select a category.';
 
-        // Handle image upload
+        // Handle main image upload
         $image_filename = null;
         if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] !== UPLOAD_ERR_NO_FILE) {
             $upload_result = upload_image($_FILES['product_image']);
@@ -40,6 +41,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        // Handle alternate image upload (optional)
+        $image_alt_filename = null;
+        if (isset($_FILES['product_image_alt']) && $_FILES['product_image_alt']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $upload_result = upload_image($_FILES['product_image_alt']);
+            if ($upload_result['success']) {
+                $image_alt_filename = $upload_result['filename'];
+            } else {
+                $errors[] = 'Alternate image: ' . $upload_result['message'];
+            }
+        }
+
         // If no errors, insert product
         if (empty($errors)) {
             try {
@@ -47,8 +59,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Insert product
                 $stmt = $pdo->prepare(
-                    "INSERT INTO products (naam, description, price, category_id, has_personalization, image_path) 
-                     VALUES (:naam, :description, :price, :category_id, :has_personalization, :image_path)"
+                    "INSERT INTO products (naam, description, price, category_id, has_personalization, image_path, image_path_alt) 
+                     VALUES (:naam, :description, :price, :category_id, :has_personalization, :image_path, :image_path_alt)"
                 );
                 $stmt->execute([
                     ':naam'                => $naam,
@@ -56,7 +68,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ':price'               => $price,
                     ':category_id'         => $category_id,
                     ':has_personalization'  => $has_personalization,
-                    ':image_path'          => $image_filename
+                    ':image_path'          => $image_filename,
+                    ':image_path_alt'      => $image_alt_filename
                 ]);
 
                 $product_id = $pdo->lastInsertId();
@@ -93,9 +106,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             } catch (Exception $e) {
                 $pdo->rollBack();
-                // Delete uploaded image if DB insert failed
+                // Delete uploaded images if DB insert failed
                 if ($image_filename) {
                     delete_image($image_filename);
+                }
+                if ($image_alt_filename) {
+                    delete_image($image_alt_filename);
                 }
                 $errors[] = 'Failed to add product. Please try again.';
                 error_log("Add Product Error: " . $e->getMessage());
@@ -137,7 +153,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="price">Price (Rs.) <span class="required">*</span></label>
+                        <label for="price">Price ($) <span class="required">*</span></label>
                         <input type="number" id="price" name="price" step="0.01" min="0" 
                                value="<?= htmlspecialchars($_POST['price'] ?? '') ?>" 
                                placeholder="0.00" required>
@@ -180,7 +196,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <h3 class="form-section-title">Product Image</h3>
 
                 <div class="form-group">
-                    <label for="product_image">Upload Image (JPG, PNG — max 2MB)</label>
+                    <label for="product_image">Main Image (JPG, PNG — max 2MB) <span class="required">*</span></label>
                     <div class="image-upload-area" id="image-upload-area">
                         <input type="file" id="product_image" name="product_image" 
                                accept=".jpg,.jpeg,.png" class="file-input">
@@ -193,6 +209,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <span>JPG, JPEG, PNG (max 2MB)</span>
                         </div>
                         <img id="image-preview" class="image-preview" style="display:none;" alt="Preview">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="product_image_alt">Hover/Alternate Image (Optional — JPG, PNG — max 2MB)</label>
+                    <div class="image-upload-area" id="image-upload-area-alt">
+                        <input type="file" id="product_image_alt" name="product_image_alt" 
+                               accept=".jpg,.jpeg,.png" class="file-input">
+                        <div class="upload-placeholder" id="upload-placeholder-alt">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                <circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/>
+                            </svg>
+                            <p>Click to upload or drag & drop</p>
+                            <span>JPG, JPEG, PNG (max 2MB) — Shows on hover</span>
+                        </div>
+                        <img id="image-preview-alt" class="image-preview" style="display:none;" alt="Preview">
                     </div>
                 </div>
 

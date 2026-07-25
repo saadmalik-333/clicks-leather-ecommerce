@@ -186,10 +186,35 @@ function get_all_categories(PDO $pdo): array {
 }
 
 /**
+ * Get category by name
+ */
+function get_category_by_name(PDO $pdo, string $name): ?array {
+    $stmt = $pdo->prepare("SELECT * FROM categories WHERE naam = :naam LIMIT 1");
+    $stmt->execute(['naam' => $name]);
+    $category = $stmt->fetch();
+    return $category ?: null;
+}
+
+/**
+ * Get products by category name
+ */
+function get_products_by_category(PDO $pdo, string $category_name): array {
+    $stmt = $pdo->prepare("
+        SELECT p.*, c.naam as category_name 
+        FROM products p 
+        JOIN categories c ON p.category_id = c.id 
+        WHERE c.naam = :category_name 
+        ORDER BY p.naam ASC
+    ");
+    $stmt->execute(['category_name' => $category_name]);
+    return $stmt->fetchAll();
+}
+
+/**
  * Format price with currency
  */
 function format_price(float $price): string {
-    return 'Rs. ' . number_format($price, 2);
+    return '$' . number_format($price, 2);
 }
 
 /**

@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS `products` (
     `category_id` INT UNSIGNED NOT NULL,
     `has_personalization` ENUM('yes', 'no') NOT NULL DEFAULT 'no',
     `image_path` VARCHAR(500) DEFAULT NULL,
+    `image_path_alt` VARCHAR(500) DEFAULT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     INDEX `idx_category` (`category_id`),
