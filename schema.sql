@@ -54,12 +54,18 @@ CREATE TABLE IF NOT EXISTS `products` (
     `price` DECIMAL(10,2) NOT NULL,
     `category_id` INT UNSIGNED NOT NULL,
     `has_personalization` ENUM('yes', 'no') NOT NULL DEFAULT 'no',
+    `color` VARCHAR(50) DEFAULT NULL,
+    `material` VARCHAR(50) DEFAULT NULL,
+    `detail_title` VARCHAR(500) DEFAULT NULL,
+    `detail_description` TEXT DEFAULT NULL,
     `image_path` VARCHAR(500) DEFAULT NULL,
     `image_path_alt` VARCHAR(500) DEFAULT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     INDEX `idx_category` (`category_id`),
     INDEX `idx_price` (`price`),
+    INDEX `idx_color` (`color`),
+    INDEX `idx_material` (`material`),
 
     CONSTRAINT `fk_products_category`
         FOREIGN KEY (`category_id`) REFERENCES `categories`(`id`)
@@ -67,7 +73,25 @@ CREATE TABLE IF NOT EXISTS `products` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
--- 4. PRODUCT VARIANTS TABLE
+-- 4. PRODUCT IMAGES TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `product_images` (
+    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `product_id` INT UNSIGNED NOT NULL,
+    `image_path` VARCHAR(500) NOT NULL,
+    `sort_order` INT UNSIGNED NOT NULL DEFAULT 0,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    INDEX `idx_product` (`product_id`),
+    INDEX `idx_sort_order` (`sort_order`),
+
+    CONSTRAINT `fk_product_images_product`
+        FOREIGN KEY (`product_id`) REFERENCES `products`(`id`)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- 5. PRODUCT VARIANTS TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `product_variants` (
     `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

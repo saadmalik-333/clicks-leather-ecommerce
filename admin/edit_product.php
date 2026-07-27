@@ -41,6 +41,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $naam = sanitize_input($_POST['naam'] ?? '');
         $description = sanitize_input($_POST['description'] ?? '');
+        $detail_title = sanitize_input($_POST['detail_title'] ?? '');
+        $detail_description = $_POST['detail_description'] ?? '';
         $price = floatval($_POST['price'] ?? 0);
         $category_id = intval($_POST['category_id'] ?? 0);
         $has_personalization = ($_POST['has_personalization'] ?? 'no') === 'yes' ? 'yes' : 'no';
@@ -95,19 +97,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $image_alt_filename = null;
         }
 
+        // Handle gallery images upload
+        $gallery_images = [];
+        if (isset($_FILES['gallery_images']) && is_array($_FILES['gallery_images']['name'])) {
+            foreach ($_FILES['gallery_images']['name'] as $key => $name) {
+                if ($_FILES['gallery_images']['error'][$key] === UPLOAD_ERR_OK) {
+                    $file = [
+                        'name' => $_FILES['gallery_images']['name'][$key],
+                        'type' => $_FILES['gallery_images']['type'][$key],
+                        'tmp_name' => $_FILES['gallery_images']['tmp_name'][$key],
+                        'error' => $_FILES['gallery_images']['error'][$key],
+                        'size' => $_FILES['gallery_images']['size'][$key]
+                    ];
+                    $upload_result = upload_image($file);
+                    if ($upload_result['success']) {
+                        $gallery_images[] = [
+                            'filename' => $upload_result['filename'],
+                            'sort_order' => intval($_POST['gallery_sort_order'][$key] ?? 0)
+                        ];
+                    } else {
+                        $errors[] = 'Gallery image: ' . $upload_result['message'];
+                    }
+                }
+            }
+        }
+
+        // Handle gallery image deletion
+        $delete_gallery_ids = $_POST['delete_gallery_image'] ?? [];
+        if (!empty($delete_gallery_ids)) {
+            foreach ($delete_gallery_ids as $gallery_id) {
+                $stmt = $pdo->prepare("SELECT image_path FROM product_images WHERE id = :id");
+                $stmt->execute([':id' => intval($gallery_id)]);
+                $gallery_img = $stmt->fetch();
+                if ($gallery_img) {
+                    delete_image($gallery_img['image_path']);
+                    $stmt = $pdo->prepare("DELETE FROM product_images WHERE id = :id");
+                    $stmt->execute([':id' => intval($gallery_id)]);
+                }
+            }
+        }
+
         if (empty($errors)) {
             try {
                 $pdo->beginTransaction();
 
                 // Update product
                 $stmt = $pdo->prepare(
-                    "UPDATE products SET naam = :naam, description = :description, price = :price, 
-                     category_id = :category_id, has_personalization = :has_personalization, 
+                    "UPDATE products SET naam = :naam, description = :description, detail_title = :detail_title, detail_description = :detail_description, price = :price,
+                     category_id = :category_id, has_personalization = :has_personalization,
                      image_path = :image_path, image_path_alt = :image_path_alt WHERE id = :id"
                 );
                 $stmt->execute([
                     ':naam'                => $naam,
                     ':description'         => $description,
+                    ':detail_title'        => $detail_title,
+                    ':detail_description'  => $detail_description,
                     ':price'               => $price,
                     ':category_id'         => $category_id,
                     ':has_personalization'  => $has_personalization,
@@ -115,6 +159,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ':image_path_alt'      => $image_alt_filename,
                     ':id'                  => $product_id
                 ]);
+
+                // Insert new gallery images
+                foreach ($gallery_images as $gallery_img) {
+                    $stmt = $pdo->prepare(
+                        "INSERT INTO product_images (product_id, image_path, sort_order)
+                         VALUES (:product_id, :image_path, :sort_order)"
+                    );
+                    $stmt->execute([
+                        ':product_id' => $product_id,
+                        ':image_path' => $gallery_img['filename'],
+                        ':sort_order' => $gallery_img['sort_order']
+                    ]);
+                }
 
                 // Delete existing variants
                 $pdo->prepare("DELETE FROM product_variants WHERE product_id = :product_id")
@@ -213,7 +270,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label>Personalization Available?</label>
                     <div class="toggle-group">
                         <label class="toggle-label">
-                            <input type="radio" name="has_personalization" value="no" 
+                            <input type="radio" name="has_personalization" value="no"
                                    <?= $product['has_personalization'] === 'no' ? 'checked' : '' ?>>
                             <span class="toggle-btn">No</span>
                         </label>
@@ -223,6 +280,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <span class="toggle-btn">Yes</span>
                         </label>
                     </div>
+                </div>
+
+                <h3 class="form-section-title" style="margin-top: var(--space-xl);">Product Detail Page Content</h3>
+
+                <div class="form-group">
+                    <label for="detail_title">Detail Title</label>
+                    <input type="text" id="detail_title" name="detail_title"
+                           value="<?= htmlspecialchars($product['detail_title'] ?? '') ?>"
+                           placeholder="e.g., Men's Brown Leather Hooded Bomber Jacket, Casual Streetwear Style">
+                </div>
+
+                <div class="form-group">
+                    <label for="detail_description">Detail Description</label>
+                    <textarea id="detail_description" name="detail_description" rows="8"
+                              placeholder="Write your intro/tagline as plain text first. For each section heading (e.g. Key Features, Perfect For, Care Instructions), end that line with a colon (:). List each point on its own line below it."><?= htmlspecialchars($product['detail_description'] ?? '') ?></textarea>
                 </div>
             </div>
 
@@ -335,6 +407,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     + Add Another Variant
                 </button>
             </div>
+
+            <h3 class="form-section-title" style="margin-top: var(--space-xl);">Gallery Images</h3>
+            <p class="form-hint">Additional images for the product detail page (separate from main/hover images)</p>
+
+            <?php
+            // Fetch existing gallery images
+            $gallery_stmt = $pdo->prepare("SELECT * FROM product_images WHERE product_id = :product_id ORDER BY sort_order ASC");
+            $gallery_stmt->execute([':product_id' => $product_id]);
+            $existing_gallery = $gallery_stmt->fetchAll();
+            ?>
+
+            <?php if (!empty($existing_gallery)): ?>
+                <div style="margin-bottom: var(--space-lg);">
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: var(--space-sm);">Existing Gallery Images:</p>
+                    <?php foreach ($existing_gallery as $img): ?>
+                        <div style="display: inline-block; margin-right: var(--space-md); margin-bottom: var(--space-md); position: relative;">
+                            <img src="<?= PUBLIC_URL ?>/uploads/<?= htmlspecialchars($img['image_path']) ?>"
+                                 style="width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                            <label style="display: block; font-size: 0.75rem; margin-top: var(--space-xs);">
+                                <input type="checkbox" name="delete_gallery_image[]" value="<?= $img['id'] ?>">
+                                Delete
+                            </label>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+
+            <div id="gallery-images-container">
+                <!-- Gallery image rows will be added here dynamically -->
+            </div>
+
+            <button type="button" class="btn btn-outline btn-sm" id="add-gallery-image-btn" onclick="addGalleryImage()">
+                + Add Another Image
+            </button>
         </div>
 
         <div class="form-actions">

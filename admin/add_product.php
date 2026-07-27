@@ -21,6 +21,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Collect product data
         $naam = sanitize_input($_POST['naam'] ?? '');
         $description = sanitize_input($_POST['description'] ?? '');
+        $detail_title = sanitize_input($_POST['detail_title'] ?? '');
+        $detail_description = $_POST['detail_description'] ?? '';
         $price = floatval($_POST['price'] ?? 0);
         $category_id = intval($_POST['category_id'] ?? 0);
         $has_personalization = ($_POST['has_personalization'] ?? 'no') === 'yes' ? 'yes' : 'no';
@@ -52,6 +54,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        // Handle gallery images upload
+        $gallery_images = [];
+        if (isset($_FILES['gallery_images']) && is_array($_FILES['gallery_images']['name'])) {
+            foreach ($_FILES['gallery_images']['name'] as $key => $name) {
+                if ($_FILES['gallery_images']['error'][$key] === UPLOAD_ERR_OK) {
+                    $file = [
+                        'name' => $_FILES['gallery_images']['name'][$key],
+                        'type' => $_FILES['gallery_images']['type'][$key],
+                        'tmp_name' => $_FILES['gallery_images']['tmp_name'][$key],
+                        'error' => $_FILES['gallery_images']['error'][$key],
+                        'size' => $_FILES['gallery_images']['size'][$key]
+                    ];
+                    $upload_result = upload_image($file);
+                    if ($upload_result['success']) {
+                        $gallery_images[] = [
+                            'filename' => $upload_result['filename'],
+                            'sort_order' => intval($_POST['gallery_sort_order'][$key] ?? 0)
+                        ];
+                    } else {
+                        $errors[] = 'Gallery image: ' . $upload_result['message'];
+                    }
+                }
+            }
+        }
+
         // If no errors, insert product
         if (empty($errors)) {
             try {
@@ -59,20 +86,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Insert product
                 $stmt = $pdo->prepare(
-                    "INSERT INTO products (naam, description, price, category_id, has_personalization, image_path, image_path_alt) 
-                     VALUES (:naam, :description, :price, :category_id, :has_personalization, :image_path, :image_path_alt)"
+                    "INSERT INTO products (naam, description, detail_title, detail_description, price, category_id, has_personalization, image_path, image_path_alt) 
+                     VALUES (:naam, :description, :detail_title, :detail_description, :price, :category_id, :has_personalization, :image_path, :image_path_alt)"
                 );
                 $stmt->execute([
                     ':naam'                => $naam,
                     ':description'         => $description,
+                    ':detail_title'        => $detail_title,
+                    ':detail_description'  => $detail_description,
                     ':price'               => $price,
                     ':category_id'         => $category_id,
                     ':has_personalization'  => $has_personalization,
                     ':image_path'          => $image_filename,
                     ':image_path_alt'      => $image_alt_filename
                 ]);
-
                 $product_id = $pdo->lastInsertId();
+
+                // Insert gallery images
+                foreach ($gallery_images as $gallery_img) {
+                    $stmt = $pdo->prepare(
+                        "INSERT INTO product_images (product_id, image_path, sort_order) 
+                         VALUES (:product_id, :image_path, :sort_order)"
+                    );
+                    $stmt->execute([
+                        ':product_id' => $product_id,
+                        ':image_path' => $gallery_img['filename'],
+                        ':sort_order' => $gallery_img['sort_order']
+                    ]);
+                }
 
                 // Insert variants if provided
                 $sizes  = $_POST['variant_size'] ?? [];
@@ -112,6 +153,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 if ($image_alt_filename) {
                     delete_image($image_alt_filename);
+                }
+                foreach ($gallery_images as $gallery_img) {
+                    delete_image($gallery_img['filename']);
                 }
                 $errors[] = 'Failed to add product. Please try again.';
                 error_log("Add Product Error: " . $e->getMessage());
@@ -178,7 +222,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label>Personalization Available?</label>
                     <div class="toggle-group">
                         <label class="toggle-label">
-                            <input type="radio" name="has_personalization" value="no" 
+                            <input type="radio" name="has_personalization" value="no"
                                    <?= ($_POST['has_personalization'] ?? 'no') === 'no' ? 'checked' : '' ?>>
                             <span class="toggle-btn">No</span>
                         </label>
@@ -188,6 +232,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <span class="toggle-btn">Yes</span>
                         </label>
                     </div>
+                </div>
+
+                <h3 class="form-section-title" style="margin-top: var(--space-xl);">Product Detail Page Content</h3>
+
+                <div class="form-group">
+                    <label for="detail_title">Detail Title</label>
+                    <input type="text" id="detail_title" name="detail_title"
+                           value="<?= htmlspecialchars($_POST['detail_title'] ?? '') ?>"
+                           placeholder="e.g., Men's Brown Leather Hooded Bomber Jacket, Casual Streetwear Style">
+                </div>
+
+                <div class="form-group">
+                    <label for="detail_description">Detail Description</label>
+                    <textarea id="detail_description" name="detail_description" rows="8"
+                              placeholder="Write your intro/tagline as plain text first. For each section heading (e.g. Key Features, Perfect For, Care Instructions), end that line with a colon (:). List each point on its own line below it."><?= htmlspecialchars($_POST['detail_description'] ?? '') ?></textarea>
                 </div>
             </div>
 
@@ -255,6 +314,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     + Add Another Variant
                 </button>
             </div>
+
+            <h3 class="form-section-title" style="margin-top: var(--space-xl);">Gallery Images</h3>
+            <p class="form-hint">Additional images for the product detail page (separate from main/hover images)</p>
+
+            <div id="gallery-images-container">
+                <!-- Gallery image rows will be added here dynamically -->
+            </div>
+
+            <button type="button" class="btn btn-outline btn-sm" id="add-gallery-image-btn" onclick="addGalleryImage()">
+                + Add Another Image
+            </button>
         </div>
 
         <div class="form-actions">

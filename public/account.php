@@ -31,7 +31,7 @@ $user_email = $_SESSION['user_email'] ?? '';
         <div class="announcement-bar">
             <span>60 DAY RETURNS</span>
             <span class="separator">|</span>
-            <span>FREE WORLDWIDE SHIPPING</span>
+            <span>WORLDWIDE SHIPPING</span>
             <span class="separator">|</span>
             <span>1 YEAR WARRANTY</span>
         </div>

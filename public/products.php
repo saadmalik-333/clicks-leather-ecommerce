@@ -21,8 +21,78 @@ if (!$category) {
     redirect(PUBLIC_URL . '/index.php');
 }
 
-// Get products for this category
-$products = get_products_by_category($pdo, $category_name);
+// Get filter parameters from URL
+$selected_colors = $_GET['color'] ?? [];
+$selected_materials = $_GET['material'] ?? [];
+$selected_price = $_GET['price'] ?? 'all';
+
+// Ensure arrays for multiple selections
+if (!is_array($selected_colors)) {
+    $selected_colors = [$selected_colors];
+}
+if (!is_array($selected_materials)) {
+    $selected_materials = [$selected_materials];
+}
+
+// Build query with filters
+$sql = "SELECT p.*, c.naam as category_naam 
+        FROM products p 
+        JOIN categories c ON p.category_id = c.id 
+        WHERE c.naam = :category_name";
+
+$params = [':category_name' => $category_name];
+$where_clauses = [];
+
+// Add color filter
+if (!empty($selected_colors)) {
+    $placeholders = [];
+    foreach ($selected_colors as $i => $color) {
+        $placeholders[] = ':color_' . $i;
+        $params[':color_' . $i] = $color;
+    }
+    $where_clauses[] = "p.color IN (" . implode(',', $placeholders) . ")";
+}
+
+// Add material filter
+if (!empty($selected_materials)) {
+    $placeholders = [];
+    foreach ($selected_materials as $i => $material) {
+        $placeholders[] = ':material_' . $i;
+        $params[':material_' . $i] = $material;
+    }
+    $where_clauses[] = "p.material IN (" . implode(',', $placeholders) . ")";
+}
+
+// Add price filter
+switch ($selected_price) {
+    case 'under-50':
+        $where_clauses[] = "p.price < 50";
+        break;
+    case '50-100':
+        $where_clauses[] = "p.price >= 50 AND p.price <= 100";
+        break;
+    case 'over-100':
+        $where_clauses[] = "p.price > 100";
+        break;
+    // 'all' - no filter
+}
+
+// Append WHERE clauses
+if (!empty($where_clauses)) {
+    $sql .= " AND " . implode(' AND ', $where_clauses);
+}
+
+$sql .= " ORDER BY p.naam ASC";
+
+// Execute query
+$stmt = $pdo->prepare($sql);
+$stmt->execute($params);
+$products = $stmt->fetchAll();
+
+// Helper function to check if a filter value is selected
+function is_filter_selected($value, $selected_array) {
+    return in_array($value, $selected_array);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -43,7 +113,7 @@ $products = get_products_by_category($pdo, $category_name);
         <div class="announcement-bar">
             <span>60 DAY RETURNS</span>
             <span class="separator">|</span>
-            <span>FREE WORLDWIDE SHIPPING</span>
+            <span>WORLDWIDE SHIPPING</span>
             <span class="separator">|</span>
             <span>1 YEAR WARRANTY</span>
         </div>
@@ -122,67 +192,77 @@ $products = get_products_by_category($pdo, $category_name);
             <div class="products-layout">
                 <!-- Left Sidebar: Filters -->
                 <aside class="filters-sidebar">
-                    <div class="filter-section">
-                        <h3 class="filter-title">Color</h3>
-                        <div class="filter-options">
-                            <label class="filter-option">
-                                <input type="checkbox" name="color" value="black">
-                                <span>Black</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="checkbox" name="color" value="brown">
-                                <span>Brown</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="checkbox" name="color" value="tan">
-                                <span>Tan</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="checkbox" name="color" value="cognac">
-                                <span>Cognac</span>
-                            </label>
+                    <form method="GET" action="" id="filter-form">
+                        <input type="hidden" name="category" value="<?= htmlspecialchars($category_slug) ?>">
+                        
+                        <div class="filter-section">
+                            <h3 class="filter-title">Color</h3>
+                            <div class="filter-options">
+                                <label class="filter-option">
+                                    <input type="checkbox" name="color[]" value="black" <?= is_filter_selected('black', $selected_colors) ? 'checked' : '' ?> onchange="this.form.submit()">
+                                    <span>Black</span>
+                                </label>
+                                <label class="filter-option">
+                                    <input type="checkbox" name="color[]" value="brown" <?= is_filter_selected('brown', $selected_colors) ? 'checked' : '' ?> onchange="this.form.submit()">
+                                    <span>Brown</span>
+                                </label>
+                                <label class="filter-option">
+                                    <input type="checkbox" name="color[]" value="tan" <?= is_filter_selected('tan', $selected_colors) ? 'checked' : '' ?> onchange="this.form.submit()">
+                                    <span>Tan</span>
+                                </label>
+                                <label class="filter-option">
+                                    <input type="checkbox" name="color[]" value="cognac" <?= is_filter_selected('cognac', $selected_colors) ? 'checked' : '' ?> onchange="this.form.submit()">
+                                    <span>Cognac</span>
+                                </label>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="filter-section">
-                        <h3 class="filter-title">Material</h3>
-                        <div class="filter-options">
-                            <label class="filter-option">
-                                <input type="checkbox" name="material" value="full-grain">
-                                <span>Full Grain</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="checkbox" name="material" value="top-grain">
-                                <span>Top Grain</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="checkbox" name="material" value="genuine">
-                                <span>Genuine</span>
-                            </label>
+                        <div class="filter-section">
+                            <h3 class="filter-title">Material</h3>
+                            <div class="filter-options">
+                                <label class="filter-option">
+                                    <input type="checkbox" name="material[]" value="full-grain" <?= is_filter_selected('full-grain', $selected_materials) ? 'checked' : '' ?> onchange="this.form.submit()">
+                                    <span>Full Grain</span>
+                                </label>
+                                <label class="filter-option">
+                                    <input type="checkbox" name="material[]" value="top-grain" <?= is_filter_selected('top-grain', $selected_materials) ? 'checked' : '' ?> onchange="this.form.submit()">
+                                    <span>Top Grain</span>
+                                </label>
+                                <label class="filter-option">
+                                    <input type="checkbox" name="material[]" value="genuine" <?= is_filter_selected('genuine', $selected_materials) ? 'checked' : '' ?> onchange="this.form.submit()">
+                                    <span>Genuine</span>
+                                </label>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="filter-section">
-                        <h3 class="filter-title">Price Range</h3>
-                        <div class="filter-options">
-                            <label class="filter-option">
-                                <input type="radio" name="price" value="all" checked>
-                                <span>All Prices</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="radio" name="price" value="under-50">
-                                <span>Under $50</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="radio" name="price" value="50-100">
-                                <span>$50 - $100</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="radio" name="price" value="over-100">
-                                <span>Over $100</span>
-                            </label>
+                        <div class="filter-section">
+                            <h3 class="filter-title">Price Range</h3>
+                            <div class="filter-options">
+                                <label class="filter-option">
+                                    <input type="radio" name="price" value="all" <?= $selected_price === 'all' ? 'checked' : '' ?> onchange="this.form.submit()">
+                                    <span>All Prices</span>
+                                </label>
+                                <label class="filter-option">
+                                    <input type="radio" name="price" value="under-50" <?= $selected_price === 'under-50' ? 'checked' : '' ?> onchange="this.form.submit()">
+                                    <span>Under $50</span>
+                                </label>
+                                <label class="filter-option">
+                                    <input type="radio" name="price" value="50-100" <?= $selected_price === '50-100' ? 'checked' : '' ?> onchange="this.form.submit()">
+                                    <span>$50 - $100</span>
+                                </label>
+                                <label class="filter-option">
+                                    <input type="radio" name="price" value="over-100" <?= $selected_price === 'over-100' ? 'checked' : '' ?> onchange="this.form.submit()">
+                                    <span>Over $100</span>
+                                </label>
+                            </div>
                         </div>
-                    </div>
+
+                        <?php if (!empty($selected_colors) || !empty($selected_materials) || $selected_price !== 'all'): ?>
+                            <div class="filter-section">
+                                <a href="?category=<?= htmlspecialchars($category_slug) ?>" class="btn btn-outline btn-sm">Clear All Filters</a>
+                            </div>
+                        <?php endif; ?>
+                    </form>
                 </aside>
 
                 <!-- Right Side: Product Grid -->
@@ -202,7 +282,7 @@ $products = get_products_by_category($pdo, $category_name);
                     <?php else: ?>
                         <div class="products-grid">
                             <?php foreach ($products as $product): ?>
-                                <a href="#" class="product-card">
+                                <a href="<?= PUBLIC_URL ?>/product-detail.php?id=<?= $product['id'] ?>" class="product-card">
                                     <div class="product-image <?php echo empty($product['image_path_alt']) ? 'no-alt' : ''; ?>">
                                         <?php if ($product['image_path']): ?>
                                             <img src="<?= PUBLIC_URL ?>/uploads/<?= htmlspecialchars($product['image_path']) ?>" alt="<?= htmlspecialchars($product['naam']) ?>" class="product-img-main">
@@ -219,13 +299,8 @@ $products = get_products_by_category($pdo, $category_name);
                                     <div class="product-info">
                                         <h3 class="product-name"><?= htmlspecialchars($product['naam']) ?></h3>
                                         <p class="product-price"><?= format_price($product['price']) ?></p>
-                                        <div class="color-swatches">
-                                            <span class="color-swatch active" style="background-color: #8B4513;" title="Brown"></span>
-                                            <span class="color-swatch" style="background-color: #2C2C2C;" title="Black"></span>
-                                            <span class="color-swatch" style="background-color: #D2691E;" title="Tan"></span>
-                                        </div>
                                         <p class="product-description">
-                                            <?php 
+                                            <?php
                                             if (!empty($product['description'])) {
                                                 $short_desc = substr(strip_tags($product['description']), 0, 90);
                                                 echo htmlspecialchars($short_desc) . (strlen($short_desc) >= 90 ? '...' : '');

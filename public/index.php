@@ -27,7 +27,7 @@ $categories = get_all_categories($pdo);
         <div class="announcement-bar">
             <span>60 DAY RETURNS</span>
             <span class="separator">|</span>
-            <span>FREE WORLDWIDE SHIPPING</span>
+            <span>WORLDWIDE SHIPPING</span>
             <span class="separator">|</span>
             <span>1 YEAR WARRANTY</span>
         </div>
@@ -94,12 +94,12 @@ $categories = get_all_categories($pdo);
     </div>
 
     <!-- Hero Section -->
-    <section class="hero-section" id="home">
+    <section class="hero-section" id="home" style="background-image: url('<?= PUBLIC_URL ?>/img/hero/brown_jacket.jpg'), linear-gradient(to right, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 40%, transparent 60%); background-size: cover; background-position: center right; background-repeat: no-repeat;">
         <div class="hero-content">
             <span class="hero-subtitle">Handcrafted Excellence</span>
             <h1 class="hero-title">Premium Leather,<br>Timeless Craft</h1>
             <p class="hero-description">
-                Discover our collection of handcrafted leather goods — from classic wallets 
+                Discover our collection of handcrafted leather goods — from classic wallets
                 to bespoke jackets. Each piece tells a story of quality and craftsmanship.
             </p>
             <div class="hero-actions">
@@ -200,7 +200,7 @@ $categories = get_all_categories($pdo);
     <section class="trust-badges">
         <div class="trust-badge">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5L20 7"></path></svg>
-            <span>Free Shipping</span>
+            <span>WorldWide Shipping</span>
         </div>
         <div class="trust-badge">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>

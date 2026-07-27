@@ -250,7 +250,7 @@ function addVariant() {
 function removeVariant(btn) {
     const row = btn.closest('.variant-row');
     const container = document.getElementById('variants-container');
-    
+
     // Keep at least one variant row
     if (container.querySelectorAll('.variant-row').length > 1) {
         row.style.opacity = '0';
@@ -263,3 +263,52 @@ function removeVariant(btn) {
         alert('At least one variant row is required.');
     }
 }
+
+// ============================================================
+// GALLERY IMAGE MANAGEMENT
+// ============================================================
+let galleryImageCounter = 0;
+
+window.addGalleryImage = function() {
+    galleryImageCounter++;
+    const container = document.getElementById('gallery-images-container');
+
+    if (!container) {
+        console.error('Gallery images container not found');
+        return;
+    }
+
+    const row = document.createElement('div');
+    row.className = 'variant-row';
+    row.id = 'gallery-image-row-' + galleryImageCounter;
+    row.innerHTML = `
+        <div class="variant-field" style="flex: 2;">
+            <label>Image</label>
+            <input type="file" name="gallery_images[]" accept=".jpg,.jpeg,.png">
+        </div>
+        <div class="variant-field">
+            <label>Sort Order</label>
+            <input type="number" name="gallery_sort_order[]" min="0" value="${galleryImageCounter}">
+        </div>
+        <button type="button" class="btn-remove-variant" onclick="removeGalleryImage(this)" title="Remove image">×</button>
+    `;
+
+    container.appendChild(row);
+};
+
+window.removeGalleryImage = function(btn) {
+    const row = btn.closest('.variant-row');
+    const container = document.getElementById('gallery-images-container');
+
+    if (!row) {
+        console.error('Gallery image row not found');
+        return;
+    }
+
+    row.style.opacity = '0';
+    row.style.transform = 'translateX(-10px)';
+    row.style.transition = 'all 0.2s ease';
+    setTimeout(function () {
+        row.remove();
+    }, 200);
+};
