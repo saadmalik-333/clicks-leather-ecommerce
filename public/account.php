@@ -152,6 +152,12 @@ $user_email = $_SESSION['user_email'] ?? '';
         </div>
     </section>
 
+    <!-- Cart Drawer -->
+    <?php include PUBLIC_PATH . '/includes/cart-drawer.php'; ?>
+
+    <!-- Cart JavaScript -->
+    <script src="<?= PUBLIC_URL ?>/js/cart.js"></script>
+
     <!-- Footer -->
     <footer class="site-footer">
         <div class="footer-grid">

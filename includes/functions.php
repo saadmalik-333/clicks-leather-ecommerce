@@ -246,3 +246,25 @@ function csrf_field(): string {
     $token = generate_csrf_token();
     return "<input type='hidden' name='csrf_token' value='{$token}'>";
 }
+
+/**
+ * Get a setting value from the settings table
+ */
+function get_setting(PDO $pdo, string $key, string $default = ''): string {
+    $stmt = $pdo->prepare("SELECT setting_value FROM settings WHERE setting_key = ?");
+    $stmt->execute([$key]);
+    $result = $stmt->fetchColumn();
+    return $result !== false ? $result : $default;
+}
+
+/**
+ * Update or insert a setting value
+ */
+function update_setting(PDO $pdo, string $key, string $value): bool {
+    $stmt = $pdo->prepare("
+        INSERT INTO settings (setting_key, setting_value) 
+        VALUES (?, ?) 
+        ON DUPLICATE KEY UPDATE setting_value = ?
+    ");
+    return $stmt->execute([$key, $value, $value]);
+}

@@ -28,6 +28,10 @@ if (!$product) {
     redirect(PUBLIC_URL . '/index.php');
 }
 
+// Get shipping settings
+$shipping_is_free = get_setting($pdo, 'shipping_is_free', 'yes');
+$shipping_flat_cost = floatval(get_setting($pdo, 'shipping_flat_cost', '15.00'));
+
 // Fetch gallery images
 $gallery_stmt = $pdo->prepare("SELECT * FROM product_images WHERE product_id = :product_id ORDER BY sort_order ASC");
 $gallery_stmt->execute([':product_id' => $product_id]);
@@ -43,6 +47,17 @@ $colors = array_unique(array_column($variants, 'color'));
 $sizes = array_unique(array_column($variants, 'size'));
 $colors = array_filter($colors);
 $sizes = array_filter($sizes);
+
+// Build variant combinations array for JavaScript
+$variant_combinations = [];
+foreach ($variants as $variant) {
+    if (!empty($variant['color']) && !empty($variant['size'])) {
+        $variant_combinations[] = [
+            'color' => $variant['color'],
+            'size' => $variant['size']
+        ];
+    }
+}
 
 // Determine title to display
 $display_title = !empty($product['detail_title']) ? $product['detail_title'] : $product['naam'];
@@ -62,78 +77,7 @@ $display_description = !empty($product['detail_description']) ? $product['detail
     <link rel="stylesheet" href="<?= PUBLIC_URL ?>/css/style.css">
 </head>
 <body>
-    <!-- Sticky Header Container -->
-    <div class="header-container" id="site-header">
-        
-        <!-- Announcement Bar (Tier 1) -->
-        <div class="announcement-bar">
-            <span>60 DAY RETURNS</span>
-            <span class="separator">|</span>
-            <span>WORLDWIDE SHIPPING</span>
-            <span class="separator">|</span>
-            <span>1 YEAR WARRANTY</span>
-        </div>
-
-        <!-- Main Header (Tier 2) -->
-        <header class="main-header">
-            <div class="header-left">
-            </div>
-            
-            <div class="header-center">
-                <a href="<?= PUBLIC_URL ?>/index.php" class="header-logo-link">
-                    <img src="<?= PUBLIC_URL ?>/img/logo/clicks_leather_logo_dark_transparent.png" alt="Clicks Leather" class="header-logo-img">
-                </a>
-            </div>
-            
-            <div class="header-right">
-                <div class="header-icons">
-                    <a href="#" class="icon-link" title="Search">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    </a>
-                    
-                    <?php if (is_logged_in()): ?>
-                        <a href="<?= is_admin() ? ADMIN_URL . '/dashboard.php' : PUBLIC_URL . '/account.php' ?>" class="icon-link" title="Account">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                        </a>
-                    <?php else: ?>
-                        <a href="<?= PUBLIC_URL ?>/login.php" class="icon-link" title="Account">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                        </a>
-                    <?php endif; ?>
-                    
-                    <a href="#" class="icon-link" title="Help">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                    </a>
-                    
-                    <a href="#" class="icon-link cart-link" title="Bag">
-                        <div class="cart-icon-wrapper">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 01-8 0"></path></svg>
-                            <span class="cart-count">0</span>
-                        </div>
-                    </a>
-                </div>
-                <a href="#newsletter" class="btn btn-primary btn-sm subscribe-btn">SUBSCRIBE AND GET 10% OFF</a>
-            </div>
-        </header>
-
-        <!-- Navigation Bar (Tier 3) -->
-        <nav class="main-nav">
-            <ul class="nav-categories">
-                <li><a href="<?= PUBLIC_URL ?>/products.php?category=wallets">WALLETS</a></li>
-                <li><a href="<?= PUBLIC_URL ?>/products.php?category=ladies-bags">LADIES BAGS</a></li>
-                <li><a href="<?= PUBLIC_URL ?>/products.php?category=leather-jackets">LEATHER JACKETS</a></li>
-                <li><a href="<?= PUBLIC_URL ?>/products.php?category=laptop-bags">LAPTOP BAGS</a></li>
-                <li><a href="<?= PUBLIC_URL ?>/products.php?category=backpacks">BACKPACKS</a></li>
-                <li><a href="<?= PUBLIC_URL ?>/products.php?category=duffel-bags">DUFFEL BAGS</a></li>
-                <li><a href="<?= PUBLIC_URL ?>/products.php?category=leather-shoes">LEATHER SHOES</a></li>
-            </ul>
-        </nav>
-    </div>
-
-    <!-- Flash Messages -->
-    <div style="position:fixed; top:80px; right:20px; z-index:1001; max-width:400px;">
-        <?= display_flash_message() ?>
-    </div>
+    <?php include PUBLIC_PATH . '/includes/header.php'; ?>
 
     <!-- Product Detail Section -->
     <section class="product-detail-page">
@@ -187,7 +131,7 @@ $display_description = !empty($product['detail_description']) ? $product['detail
                 </div>
 
                 <!-- Right: Product Info -->
-                <div class="product-info-detail">
+                <div class="product-info-detail" data-variants="<?= htmlspecialchars(json_encode($variant_combinations)) ?>">
                     <h1 class="product-detail-title"><?= htmlspecialchars($display_title) ?></h1>
                     
                     <div class="trust-badges">
@@ -209,7 +153,7 @@ $display_description = !empty($product['detail_description']) ? $product['detail
                             <svg class="trust-badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                 <polyline points="20,6 9,17 4,12"/>
                             </svg>
-                            <span>Free Delivery</span>
+                            <span><?= $shipping_is_free === 'yes' ? 'Free Delivery' : 'Delivery from ' . format_price($shipping_flat_cost) ?></span>
                         </div>
                     </div>
 
@@ -334,7 +278,9 @@ $display_description = !empty($product['detail_description']) ? $product['detail
                         <?php endforeach; ?>
                     </div>
 
-                    <button class="btn btn-primary btn-lg btn-full add-to-cart-btn">
+                    <div id="add-to-cart-error" class="add-to-cart-error"></div>
+
+                    <button class="btn btn-primary btn-lg btn-full add-to-cart-btn" data-product-id="<?= $product['id'] ?>">
                         Add to Cart
                     </button>
                 </div>
@@ -342,52 +288,14 @@ $display_description = !empty($product['detail_description']) ? $product['detail
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="site-footer">
-        <div class="footer-grid">
-            <div class="footer-col">
-                <a href="<?= PUBLIC_URL ?>/index.php" class="footer-logo-link">
-                    <img src="<?= PUBLIC_URL ?>/img/logo/clicks_leather_logo_dark_transparent.png" alt="Clicks Leather" class="footer-logo-img">
-                </a>
-                <p>Premium handcrafted leather goods.</p>
-            </div>
-            <div class="footer-col">
-                <h4>Shop</h4>
-                <ul>
-                    <li><a href="<?= PUBLIC_URL ?>/products.php?category=wallets">Wallets</a></li>
-                    <li><a href="<?= PUBLIC_URL ?>/products.php?category=ladies-bags">Bags</a></li>
-                    <li><a href="#">Accessories</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h4>Company</h4>
-                <ul>
-                    <li><a href="#">About Us</a></li>
-                    <li><a href="#">Contact</a></li>
-                    <li><a href="#">Journal</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h4>Support</h4>
-                <ul>
-                    <li><a href="#">FAQ</a></li>
-                    <li><a href="#">Shipping & Returns</a></li>
-                    <li><a href="#">Warranty</a></li>
-                </ul>
-            </div>
-            <div class="footer-col newsletter-col">
-                <h4>Newsletter</h4>
-                <p>Join our list for 10% off your first order.</p>
-                <form class="newsletter-form">
-                    <input type="email" placeholder="Your email address" required>
-                    <button type="submit" class="btn btn-primary btn-sm">Subscribe</button>
-                </form>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; <?= date('Y') ?> Clicks Leather. All rights reserved. Handcrafted with ❤️</p>
-        </div>
-    </footer>
+    <!-- Cart Drawer -->
+    <?php include PUBLIC_PATH . '/includes/cart-drawer.php'; ?>
+
+    <!-- Cart JavaScript -->
+    <script src="<?= PUBLIC_URL ?>/js/cart.js"></script>
+    <script src="<?= PUBLIC_URL ?>/js/header-scroll.js"></script>
+
+    <?php include PUBLIC_PATH . '/includes/footer.php'; ?>
 
     <script>
         // Gallery Navigation
@@ -431,72 +339,101 @@ $display_description = !empty($product['detail_description']) ? $product['detail
             thumb.addEventListener('click', () => showSlide(index));
         });
 
-        // Option buttons (color/size)
+        // Option buttons (color/size) with variant validation
+        const productInfo = document.querySelector('.product-info-detail');
+        const variantCombinations = productInfo ? JSON.parse(productInfo.dataset.variants || '[]') : [];
+
+        // Helper function to get valid options for a selected option
+        function getValidOptions(selectedType, selectedValue) {
+            const validOptions = [];
+
+            variantCombinations.forEach(combo => {
+                if (combo[selectedType] === selectedValue) {
+                    const otherType = selectedType === 'color' ? 'size' : 'color';
+                    validOptions.push(combo[otherType]);
+                }
+            });
+
+            return [...new Set(validOptions)]; // Remove duplicates
+        }
+
         const optionBtns = document.querySelectorAll('.option-btn');
         optionBtns.forEach(btn => {
             btn.addEventListener('click', function() {
                 const group = this.parentElement;
+                const isColor = this.classList.contains('color-btn');
+
+                // Remove active from all buttons in this group
                 group.querySelectorAll('.option-btn').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
+
+                // Get selected value
+                const selectedValue = this.dataset.value;
+
+                // Disable/enable options in the other group
+                const otherGroupClass = isColor ? '.size-btn' : '.color-btn';
+                const otherGroup = document.querySelector(otherGroupClass)?.parentElement;
+
+                if (otherGroup) {
+                    const validOptions = getValidOptions(isColor ? 'color' : 'size', selectedValue);
+                    const otherBtns = otherGroup.querySelectorAll('.option-btn');
+
+                    otherBtns.forEach(otherBtn => {
+                        const otherValue = otherBtn.dataset.value;
+                        const isValid = validOptions.includes(otherValue);
+
+                        if (isValid) {
+                            otherBtn.classList.remove('disabled');
+                            otherBtn.disabled = false;
+                        } else {
+                            otherBtn.classList.add('disabled');
+                            otherBtn.disabled = true;
+
+                            // Clear selection if this button was active
+                            if (otherBtn.classList.contains('active')) {
+                                otherBtn.classList.remove('active');
+                            }
+                        }
+                    });
+                }
             });
         });
 
-        // Multi-Stage Header Scroll Effect with Hysteresis
-        let isTicking = false;
-        let currentStage = 1;
+        // Add to Cart functionality
+        const addToCartBtn = document.querySelector('.add-to-cart-btn');
+        const addToCartError = document.getElementById('add-to-cart-error');
 
-        window.addEventListener('scroll', function() {
-            if (!isTicking) {
-                window.requestAnimationFrame(function() {
-                    const header = document.getElementById('site-header');
-                    const currentScrollY = window.scrollY;
-                    
-                    const stage2Activate = 40;
-                    const stage2Deactivate = 20;
-                    const stage3Activate = 160;
-                    const stage3Deactivate = 140;
-                    
-                    if (currentStage === 1 && currentScrollY < stage2Activate) {
-                        header.style.boxShadow = 'none';
-                        header.classList.remove('stage-2', 'stage-3');
-                    }
-                    else if (currentStage === 1 && currentScrollY >= stage2Activate) {
-                        header.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)';
-                        header.classList.add('stage-2');
-                        header.classList.remove('stage-3');
-                        currentStage = 2;
-                    }
-                    else if (currentStage === 2 && currentScrollY >= stage2Deactivate && currentScrollY < stage3Activate) {
-                        header.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)';
-                        header.classList.add('stage-2');
-                        header.classList.remove('stage-3');
-                    }
-                    else if (currentStage === 2 && currentScrollY < stage2Deactivate) {
-                        header.style.boxShadow = 'none';
-                        header.classList.remove('stage-2', 'stage-3');
-                        currentStage = 1;
-                    }
-                    else if ((currentStage === 2 || currentStage === 1) && currentScrollY >= stage3Activate) {
-                        header.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)';
-                        header.classList.add('stage-2', 'stage-3');
-                        currentStage = 3;
-                    }
-                    else if (currentStage === 3 && currentScrollY >= stage3Deactivate) {
-                        header.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)';
-                        header.classList.add('stage-2', 'stage-3');
-                    }
-                    else if (currentStage === 3 && currentScrollY < stage3Deactivate) {
-                        header.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)';
-                        header.classList.add('stage-2');
-                        header.classList.remove('stage-3');
-                        currentStage = 2;
-                    }
-                    
-                    isTicking = false;
-                });
-                isTicking = true;
-            }
-        });
+        if (addToCartBtn) {
+            addToCartBtn.addEventListener('click', async function() {
+                const productId = this.dataset.productId;
+                const selectedColor = document.querySelector('.color-btn.active')?.dataset.value || '';
+                const selectedSize = document.querySelector('.size-btn.active')?.dataset.value || '';
+
+                // Check if product has variants and none selected
+                const hasColors = document.querySelectorAll('.color-btn').length > 0;
+                const hasSizes = document.querySelectorAll('.size-btn').length > 0;
+
+                if ((hasColors && !selectedColor) || (hasSizes && !selectedSize)) {
+                    addToCartError.textContent = 'Please select a color/size';
+                    addToCartError.style.display = 'block';
+                    return;
+                }
+
+                addToCartError.style.display = 'none';
+                addToCartBtn.disabled = true;
+                addToCartBtn.textContent = 'Adding...';
+
+                const result = await addToCart(productId, selectedColor, selectedSize, 1);
+
+                addToCartBtn.disabled = false;
+                addToCartBtn.textContent = 'Add to Cart';
+
+                if (!result.success) {
+                    addToCartError.textContent = result.message || 'Error adding to cart';
+                    addToCartError.style.display = 'block';
+                }
+            });
+        }
     </script>
 </body>
 </html>

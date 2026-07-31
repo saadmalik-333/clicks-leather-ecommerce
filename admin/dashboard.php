@@ -13,9 +13,8 @@ $total_revenue  = $pdo->query("SELECT COALESCE(SUM(total_amount), 0) FROM orders
 
 // Fetch recent orders (last 10)
 $recent_orders = $pdo->query(
-    "SELECT o.*, u.naam as user_naam 
+    "SELECT o.* 
      FROM orders o 
-     LEFT JOIN users u ON o.user_id = u.id 
      ORDER BY o.created_at DESC 
      LIMIT 10"
 )->fetchAll();
@@ -130,7 +129,7 @@ $low_stock = $pdo->query(
                     <?php foreach ($recent_orders as $order): ?>
                         <tr>
                             <td><strong>#<?= $order['id'] ?></strong></td>
-                            <td><?= htmlspecialchars($order['user_naam']) ?></td>
+                            <td><?= htmlspecialchars($order['full_name']) ?></td>
                             <td><?= format_price($order['total_amount']) ?></td>
                             <td>
                                 <span class="status-badge status-<?= $order['status'] ?>">
