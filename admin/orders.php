@@ -244,9 +244,15 @@ if ($view_order_id) {
 
                 <!-- Order Summary -->
                 <div class="order-summary" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                    <?php if ($order_detail['discount_amount'] > 0): ?>
+                        <div class="summary-row" style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #27ae60;">
+                            <span style="color: var(--text-muted);">Discount</span>
+                            <span>-<?= format_price($order_detail['discount_amount']) ?></span>
+                        </div>
+                    <?php endif; ?>
                     <div class="summary-row" style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                         <span style="color: var(--text-muted);">Subtotal</span>
-                        <span><?= format_price(array_sum(array_map(fn($item) => $item['price_at_order'] * $item['quantity'], $order_items))) ?></span>
+                        <span><?= format_price(array_sum(array_map(fn($item) => $item['price_at_order'] * $item['quantity'], $order_items)) + $order_detail['discount_amount']) ?></span>
                     </div>
                     <div class="summary-row" style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                         <span style="color: var(--text-muted);">Shipping</span>

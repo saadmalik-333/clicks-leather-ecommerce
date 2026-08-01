@@ -308,9 +308,15 @@ $total_items = array_sum(array_column($order_items, 'quantity'));
                 </div>
             <?php endforeach; ?>
 
+            <?php if ($order['discount_amount'] > 0): ?>
+                <div class="summary-row" style="color: #27ae60;">
+                    <span>Discount</span>
+                    <span>-<?= format_price($order['discount_amount']) ?></span>
+                </div>
+            <?php endif; ?>
             <div class="summary-row">
                 <span>Subtotal (<?= $total_items ?> item<?= $total_items !== 1 ? 's' : '' ?>)</span>
-                <span><?= format_price($order['total_amount'] - $order['shipping_cost']) ?></span>
+                <span><?= format_price($order['total_amount'] - $order['shipping_cost'] + $order['discount_amount']) ?></span>
             </div>
             <div class="summary-row">
                 <span>Shipping (<?= ucfirst($order['shipping_method']) ?>)</span>

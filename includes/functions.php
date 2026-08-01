@@ -268,3 +268,68 @@ function update_setting(PDO $pdo, string $key, string $value): bool {
     ");
     return $stmt->execute([$key, $value, $value]);
 }
+
+/**
+ * Get applicable discount for a product
+ * Priority: product-level > category-level > sitewide
+ * 
+ * @param PDO $pdo Database connection
+ * @param int $product_id Product ID
+ * @param int $category_id Category ID
+ * @return array|null Discount info or null if no applicable discount
+ */
+function get_product_discount(PDO $pdo, int $product_id, int $category_id): ?array {
+    $today = date('Y-m-d');
+    
+    // Priority 1: Product-level discount
+    $stmt = $pdo->prepare("
+        SELECT * FROM discounts 
+        WHERE type = 'product' 
+        AND target_id = ? 
+        AND is_active = 1 
+        AND (start_date IS NULL OR start_date <= ?)
+        AND (end_date IS NULL OR end_date >= ?)
+        ORDER BY id DESC
+        LIMIT 1
+    ");
+    $stmt->execute([$product_id, $today, $today]);
+    $discount = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($discount) {
+        return $discount;
+    }
+    
+    // Priority 2: Category-level discount
+    $stmt = $pdo->prepare("
+        SELECT * FROM discounts 
+        WHERE type = 'category' 
+        AND target_id = ? 
+        AND is_active = 1 
+        AND (start_date IS NULL OR start_date <= ?)
+        AND (end_date IS NULL OR end_date >= ?)
+        ORDER BY id DESC
+        LIMIT 1
+    ");
+    $stmt->execute([$category_id, $today, $today]);
+    $discount = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($discount) {
+        return $discount;
+    }
+    
+    // Priority 3: Sitewide discount
+    $stmt = $pdo->prepare("
+        SELECT * FROM discounts 
+        WHERE type = 'sitewide' 
+        AND target_id IS NULL 
+        AND is_active = 1 
+        AND (start_date IS NULL OR start_date <= ?)
+        AND (end_date IS NULL OR end_date >= ?)
+        ORDER BY id DESC
+        LIMIT 1
+    ");
+    $stmt->execute([$today, $today]);
+    $discount = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    return $discount ?: null;
+}

@@ -57,6 +57,15 @@ $current_page = basename($_SERVER['PHP_SELF']);
                         <span>Orders</span>
                     </a>
                 </li>
+                <li class="<?= $current_page === 'discounts.php' ? 'active' : '' ?>">
+                    <a href="<?= ADMIN_URL ?>/discounts.php" id="nav-discounts">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/>
+                            <line x1="7" y1="7" x2="7.01" y2="7"/>
+                        </svg>
+                        <span>Discounts</span>
+                    </a>
+                </li>
                 <li class="<?= $current_page === 'settings.php' ? 'active' : '' ?>">
                     <a href="<?= ADMIN_URL ?>/settings.php" id="nav-settings">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

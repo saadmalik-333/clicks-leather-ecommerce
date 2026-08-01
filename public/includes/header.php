@@ -29,7 +29,7 @@
         
         <div class="header-right">
             <div class="header-icons">
-                <a href="#" class="icon-link" title="Search">
+                <a href="#" class="icon-link" id="search-icon" title="Search">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                 </a>
                 
@@ -43,7 +43,7 @@
                     </a>
                 <?php endif; ?>
                 
-                <a href="#" class="icon-link" title="Help">
+                <a href="<?= PUBLIC_URL ?>/faq.php" class="icon-link" title="Help">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
                 </a>
                 
@@ -54,6 +54,17 @@
                     </div>
                 </a>
             </div>
+            
+            <!-- Search Dropdown -->
+            <div id="search-dropdown" class="search-dropdown">
+                <div class="search-input-wrapper">
+                    <input type="text" id="search-input" class="search-input" placeholder="Search products..." autocomplete="off">
+                </div>
+                <div id="search-results" class="search-results">
+                    <div class="search-message">Type to search products</div>
+                </div>
+            </div>
+            
             <a href="#newsletter" class="btn btn-primary btn-sm subscribe-btn">SUBSCRIBE AND GET 10% OFF</a>
         </div>
     </header>
@@ -76,3 +87,6 @@
 <div style="position:fixed; top:80px; right:20px; z-index:1001; max-width:400px;">
     <?= display_flash_message() ?>
 </div>
+
+<!-- Search Script -->
+<script src="<?= PUBLIC_URL ?>/js/search.js"></script>

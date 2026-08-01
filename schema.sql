@@ -156,8 +156,6 @@ CREATE TABLE IF NOT EXISTS `order_items` (
 
 -- ============================================================
 -- DEFAULT ADMIN USER
--- Password: Admin@123 (change after first login!)
--- Generated with: password_hash('Admin@123', PASSWORD_BCRYPT)
 -- ============================================================
 INSERT INTO `users` (`naam`, `email`, `password_hashed`, `role`) VALUES
     ('Admin', 'admin@clicksleather.com', '$2y$10$rIKWU5GM9ay6h3eA/jedGOPnodf4a4RT/v6eWPl.fTBdc/pvhXW0.', 'admin');

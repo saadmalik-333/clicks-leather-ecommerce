@@ -99,6 +99,15 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $products = $stmt->fetchAll();
 
+// Fetch discounts for all products
+$product_discounts = [];
+foreach ($products as $product) {
+    $discount = get_product_discount($pdo, $product['id'], $product['category_id']);
+    if ($discount) {
+        $product_discounts[$product['id']] = $discount;
+    }
+}
+
 // Helper function to check if a filter value is selected
 function is_filter_selected($value, $selected_array) {
     return in_array($value, $selected_array);
@@ -237,7 +246,18 @@ function is_filter_selected($value, $selected_array) {
                                     </div>
                                     <div class="product-info">
                                         <h3 class="product-name"><?= htmlspecialchars($product['naam']) ?></h3>
-                                        <p class="product-price"><?= format_price($product['price']) ?></p>
+                                        <?php if (isset($product_discounts[$product['id']])): 
+                                            $discount = $product_discounts[$product['id']];
+                                            $discounted_price = $product['price'] * (1 - $discount['discount_percent'] / 100);
+                                        ?>
+                                            <div class="product-price-container">
+                                                <p class="product-price-original" style="text-decoration: line-through; color: var(--text-muted); font-size: 0.9rem;"><?= format_price($product['price']) ?></p>
+                                                <p class="product-price" style="color: var(--color-primary); font-weight: 600;"><?= format_price($discounted_price) ?></p>
+                                                <span class="discount-badge" style="background: #8B7355; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500;"><?= number_format($discount['discount_percent'], 0) ?>% OFF</span>
+                                            </div>
+                                        <?php else: ?>
+                                            <p class="product-price"><?= format_price($product['price']) ?></p>
+                                        <?php endif; ?>
                                         <p class="product-description">
                                             <?php
                                             if (!empty($product['description'])) {

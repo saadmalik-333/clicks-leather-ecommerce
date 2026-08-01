@@ -47,13 +47,20 @@ try {
     }
     
     // Get product details
-    $stmt = $pdo->prepare("SELECT id FROM products WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT id, price, category_id FROM products WHERE id = ?");
     $stmt->execute([$product_id]);
-    if (!$stmt->fetch()) {
+    $product = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$product) {
         http_response_code(404);
         echo json_encode(['success' => false, 'message' => 'Product not found']);
         exit;
     }
+    
+    // Get applicable discount for this product
+    $discount = get_product_discount($pdo, $product_id, $product['category_id']);
+    $discount_percent = $discount ? $discount['discount_percent'] : 0;
+    $discounted_price = $discount ? $product['price'] * (1 - $discount_percent / 100) : $product['price'];
     
     // Find variant_id if color/size provided
     $variant_id = null;
@@ -120,9 +127,9 @@ try {
         $stmt = $pdo->prepare("UPDATE cart_items SET quantity = ? WHERE id = ?");
         $stmt->execute([$new_quantity, $existing_item['id']]);
     } else {
-        // Insert new item
-        $stmt = $pdo->prepare("INSERT INTO cart_items (user_id, session_id, product_id, variant_id, quantity) VALUES (?, ?, ?, ?, ?)");
-        $stmt->execute([$user_id, $session_id, $product_id, $variant_id, $quantity]);
+        // Insert new item with discounted price
+        $stmt = $pdo->prepare("INSERT INTO cart_items (user_id, session_id, product_id, variant_id, quantity, discounted_price, discount_percent) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$user_id, $session_id, $product_id, $variant_id, $quantity, $discounted_price, $discount_percent]);
     }
     
     // Get updated cart count

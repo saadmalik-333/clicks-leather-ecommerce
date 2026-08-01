@@ -27,6 +27,8 @@ if ($user_id) {
         SELECT 
             ci.id as cart_item_id,
             ci.quantity,
+            ci.discounted_price,
+            ci.discount_percent,
             p.id as product_id,
             p.naam as product_name,
             p.price,
@@ -47,6 +49,8 @@ if ($user_id) {
         SELECT 
             ci.id as cart_item_id,
             ci.quantity,
+            ci.discounted_price,
+            ci.discount_percent,
             p.id as product_id,
             p.naam as product_name,
             p.price,
@@ -71,11 +75,17 @@ if (empty($cart_items)) {
     redirect(PUBLIC_URL . '/index.php');
 }
 
-// Calculate subtotal
+// Calculate subtotal using discounted price if available
 $subtotal = 0;
+$original_subtotal = 0;
 foreach ($cart_items as $item) {
-    $subtotal += $item['price'] * $item['quantity'];
+    $item_price = $item['discounted_price'] ?? $item['price'];
+    $subtotal += $item_price * $item['quantity'];
+    $original_subtotal += $item['price'] * $item['quantity'];
 }
+
+// Calculate total discount amount
+$discount_amount = $original_subtotal - $subtotal;
 
 // Get shipping settings
 $shipping_is_free = get_setting($pdo, 'shipping_is_free', 'yes');
@@ -86,6 +96,28 @@ $shipping_cost = $shipping_is_free === 'yes' ? 0.00 : $shipping_flat_cost;
 $shipping_method = $shipping_is_free === 'yes' ? 'free' : 'flat_rate';
 
 $total = $subtotal + $shipping_cost;
+
+// Fetch default address if logged in
+$default_address = null;
+if (is_logged_in()) {
+    $stmt = $pdo->prepare("
+        SELECT full_name, address_line1, address_line2, city, state, country, postal_code 
+        FROM addresses 
+        WHERE user_id = ? AND is_default = 1 
+        LIMIT 1
+    ");
+    $stmt->execute([$_SESSION['user_id']]);
+    $default_address = $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
+// Pre-fill form values with default address if available
+$prefill_full_name = $default_address['full_name'] ?? '';
+$prefill_address_line1 = $default_address['address_line1'] ?? '';
+$prefill_address_line2 = $default_address['address_line2'] ?? '';
+$prefill_city = $default_address['city'] ?? '';
+$prefill_state = $default_address['state'] ?? '';
+$prefill_country = $default_address['country'] ?? '';
+$prefill_postal_code = $default_address['postal_code'] ?? '';
 
 // Handle form submission
 $errors = [];
@@ -149,9 +181,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 INSERT INTO orders (
                     user_id, email, phone, full_name, 
                     address_line1, address_line2, city, state, 
-                    country, postal_code, shipping_cost, shipping_method,
+                    country, postal_code, shipping_cost, shipping_method, discount_amount,
                     total_amount, status
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_payment')
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_payment')
             ";
             $order_stmt = $pdo->prepare($order_sql);
             $order_stmt->execute([
@@ -167,6 +199,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $form_data['postal_code'],
                 $shipping_cost,
                 $shipping_method,
+                $discount_amount,
                 $total
             ]);
 
@@ -174,6 +207,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Insert order items
             foreach ($cart_items as $item) {
+                $item_price = $item['discounted_price'] ?? $item['price'];
                 $order_item_sql = "
                     INSERT INTO order_items (
                         order_id, product_id, variant_id, 
@@ -186,7 +220,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $item['product_id'],
                     $item['variant_id'],
                     $item['quantity'],
-                    $item['price']
+                    $item_price
                 ]);
             }
 
@@ -489,35 +523,35 @@ $countries = [
                         <div class="form-group">
                             <label for="full_name">Full Name <span class="required">*</span></label>
                             <input type="text" id="full_name" name="full_name" 
-                                   value="<?= htmlspecialchars($form_data['full_name']) ?>" 
+                                   value="<?= htmlspecialchars($_SERVER['REQUEST_METHOD'] === 'POST' ? $form_data['full_name'] : $prefill_full_name) ?>" 
                                    placeholder="John Doe"
                                    required>
                         </div>
                         <div class="form-group">
                             <label for="address_line1">Address Line 1 <span class="required">*</span></label>
                             <input type="text" id="address_line1" name="address_line1" 
-                                   value="<?= htmlspecialchars($form_data['address_line1']) ?>" 
+                                   value="<?= htmlspecialchars($_SERVER['REQUEST_METHOD'] === 'POST' ? $form_data['address_line1'] : $prefill_address_line1) ?>" 
                                    placeholder="House #, Street name"
                                    required>
                         </div>
                         <div class="form-group">
                             <label for="address_line2">Address Line 2 (Optional)</label>
                             <input type="text" id="address_line2" name="address_line2" 
-                                   value="<?= htmlspecialchars($form_data['address_line2']) ?>" 
+                                   value="<?= htmlspecialchars($_SERVER['REQUEST_METHOD'] === 'POST' ? $form_data['address_line2'] : $prefill_address_line2) ?>" 
                                    placeholder="Apartment, floor, etc.">
                         </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="city">City <span class="required">*</span></label>
                                 <input type="text" id="city" name="city" 
-                                       value="<?= htmlspecialchars($form_data['city']) ?>" 
+                                       value="<?= htmlspecialchars($_SERVER['REQUEST_METHOD'] === 'POST' ? $form_data['city'] : $prefill_city) ?>" 
                                        placeholder="e.g. Karachi"
                                        required>
                             </div>
                             <div class="form-group">
                                 <label for="state">State/Province <span class="required">*</span></label>
                                 <input type="text" id="state" name="state" 
-                                       value="<?= htmlspecialchars($form_data['state']) ?>" 
+                                       value="<?= htmlspecialchars($_SERVER['REQUEST_METHOD'] === 'POST' ? $form_data['state'] : $prefill_state) ?>" 
                                        placeholder="e.g. Sindh"
                                        required>
                             </div>
@@ -529,7 +563,7 @@ $countries = [
                                     <option value="">Select Country</option>
                                     <?php foreach ($countries as $country): ?>
                                         <option value="<?= htmlspecialchars($country) ?>" 
-                                                <?= $form_data['country'] === $country ? 'selected' : '' ?>>
+                                                <?= ($_SERVER['REQUEST_METHOD'] === 'POST' ? $form_data['country'] : $prefill_country) === $country ? 'selected' : '' ?>>
                                             <?= htmlspecialchars($country) ?>
                                         </option>
                                     <?php endforeach; ?>
@@ -538,7 +572,7 @@ $countries = [
                             <div class="form-group">
                                 <label for="postal_code">Postal/Zip Code <span class="required">*</span></label>
                                 <input type="text" id="postal_code" name="postal_code" 
-                                       value="<?= htmlspecialchars($form_data['postal_code']) ?>" 
+                                       value="<?= htmlspecialchars($_SERVER['REQUEST_METHOD'] === 'POST' ? $form_data['postal_code'] : $prefill_postal_code) ?>" 
                                        placeholder="e.g. 75500"
                                        required>
                             </div>
@@ -585,7 +619,18 @@ $countries = [
                                 <?php endif; ?>
                                 <div class="order-item-qty-price">
                                     <span>Qty: <?= $item['quantity'] ?></span>
-                                    <span><?= format_price($item['price'] * $item['quantity']) ?></span>
+                                    <?php 
+                                    $item_price = $item['discounted_price'] ?? $item['price'];
+                                    $item_total = $item_price * $item['quantity'];
+                                    ?>
+                                    <?php if ($item['discounted_price'] && $item['discounted_price'] < $item['price']): ?>
+                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                            <span style="text-decoration: line-through; color: #999; font-size: 0.85rem;"><?= format_price($item['price'] * $item['quantity']) ?></span>
+                                            <span style="color: var(--color-primary, #e63946); font-weight: 600;"><?= format_price($item_total) ?></span>
+                                        </div>
+                                    <?php else: ?>
+                                        <span><?= format_price($item_total) ?></span>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>

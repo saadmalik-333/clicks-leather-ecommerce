@@ -32,6 +32,9 @@ if (!$product) {
 $shipping_is_free = get_setting($pdo, 'shipping_is_free', 'yes');
 $shipping_flat_cost = floatval(get_setting($pdo, 'shipping_flat_cost', '15.00'));
 
+// Get product discount
+$product_discount = get_product_discount($pdo, $product_id, $product['category_id']);
+
 // Fetch gallery images
 $gallery_stmt = $pdo->prepare("SELECT * FROM product_images WHERE product_id = :product_id ORDER BY sort_order ASC");
 $gallery_stmt->execute([':product_id' => $product_id]);
@@ -158,7 +161,17 @@ $display_description = !empty($product['detail_description']) ? $product['detail
                     </div>
 
                     <div class="product-detail-price">
-                        <?= format_price($product['price']) ?>
+                        <?php if ($product_discount): 
+                            $discounted_price = $product['price'] * (1 - $product_discount['discount_percent'] / 100);
+                        ?>
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <span style="text-decoration: line-through; color: var(--text-muted); font-size: 1.1rem;"><?= format_price($product['price']) ?></span>
+                                <span style="color: var(--color-primary); font-weight: 600; font-size: 1.5rem;"><?= format_price($discounted_price) ?></span>
+                                <span class="discount-badge" style="background: #8B7355; color: white; padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.85rem; font-weight: 500;"><?= number_format($product_discount['discount_percent'], 0) ?>% OFF</span>
+                            </div>
+                        <?php else: ?>
+                            <?= format_price($product['price']) ?>
+                        <?php endif; ?>
                     </div>
 
                     <?php if (!empty($colors)): ?>

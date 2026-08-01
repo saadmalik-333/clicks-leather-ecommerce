@@ -32,7 +32,7 @@
         <div class="footer-col">
             <h4>Support</h4>
             <ul>
-                <li><a href="#">FAQ</a></li>
+                <li><a href="<?= PUBLIC_URL ?>/faq.php">FAQ</a></li>
                 <li><a href="#">Shipping & Returns</a></li>
                 <li><a href="#">Warranty</a></li>
             </ul>

@@ -64,6 +64,20 @@
             if (item.color) variantInfo.push(`<span>Color:</span> ${item.color}`);
             if (item.size) variantInfo.push(`<span>Size:</span> ${item.size}`);
             
+            // Price display with discount if applicable
+            let priceDisplay = '';
+            if (item.discounted_price && item.discounted_price < item.price) {
+                priceDisplay = `
+                    <div class="cart-item-price-container">
+                        <span class="cart-item-price-original" style="text-decoration: line-through; color: #999; font-size: 0.85rem;">${item.price_formatted}</span>
+                        <span class="cart-item-price-discounted" style="color: var(--color-primary, #e63946); font-weight: 600;">${item.discounted_price_formatted}</span>
+                        <span class="cart-item-discount-badge" style="background: #8B7355; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; margin-left: 0.5rem; white-space: nowrap;">${Math.round(item.discount_percent)}% OFF</span>
+                    </div>
+                `;
+            } else {
+                priceDisplay = `<div class="cart-item-price">${item.price_formatted}</div>`;
+            }
+            
             html += `
                 <div class="cart-item" data-cart-item-id="${item.cart_item_id}">
                     <img src="${item.image_url}" alt="${item.product_name}" class="cart-item-image">
@@ -76,7 +90,7 @@
                                 <span class="cart-quantity-value">${item.quantity}</span>
                                 <button class="cart-quantity-btn" onclick="updateQuantity(${item.cart_item_id}, ${item.quantity + 1})">+</button>
                             </div>
-                            <div class="cart-item-price">${item.line_total_formatted}</div>
+                            ${priceDisplay}
                             <button class="cart-item-remove" onclick="removeCartItem(${item.cart_item_id})" aria-label="Remove item">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <line x1="18" y1="6" x2="6" y2="18"></line>

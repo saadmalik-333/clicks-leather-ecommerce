@@ -178,8 +178,12 @@ $categories = get_all_categories($pdo);
         // Smooth scroll for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
             anchor.addEventListener('click', function(e) {
+                const href = this.getAttribute('href');
+                // Skip if href is just "#"
+                if (href === '#') return;
+                
                 e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
+                const target = document.querySelector(href);
                 if (target) {
                     target.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }

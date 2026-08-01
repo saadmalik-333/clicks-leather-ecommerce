@@ -35,6 +35,8 @@ try {
             SELECT 
                 ci.id as cart_item_id,
                 ci.quantity,
+                ci.discounted_price,
+                ci.discount_percent,
                 p.id as product_id,
                 p.naam as product_name,
                 p.price,
@@ -55,6 +57,8 @@ try {
             SELECT 
                 ci.id as cart_item_id,
                 ci.quantity,
+                ci.discounted_price,
+                ci.discount_percent,
                 p.id as product_id,
                 p.naam as product_name,
                 p.price,
@@ -77,7 +81,9 @@ try {
     $cart_count = 0;
     
     foreach ($items as &$item) {
-        $item['line_total'] = $item['price'] * $item['quantity'];
+        // Use discounted price if available, otherwise use original price
+        $item_price = $item['discounted_price'] ?? $item['price'];
+        $item['line_total'] = $item_price * $item['quantity'];
         $subtotal += $item['line_total'];
         $cart_count += $item['quantity'];
         
@@ -88,8 +94,9 @@ try {
             $item['image_url'] = PUBLIC_URL . '/img/placeholder.jpg';
         }
         
-        // Format price
+        // Format prices
         $item['price_formatted'] = format_price($item['price']);
+        $item['discounted_price_formatted'] = $item['discounted_price'] ? format_price($item['discounted_price']) : null;
         $item['line_total_formatted'] = format_price($item['line_total']);
     }
     
