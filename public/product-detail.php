@@ -78,6 +78,41 @@ $display_description = !empty($product['detail_description']) ? $product['detail
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= PUBLIC_URL ?>/css/style.css">
+    <style>
+        .option-optional {
+            font-weight: 400;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .personalization-input-wrapper {
+            position: relative;
+        }
+
+        .personalization-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            font-size: 0.95rem;
+            font-family: var(--font-body);
+            padding-right: 50px;
+        }
+
+        .personalization-input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
+        .char-counter {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+    </style>
 </head>
 <body>
     <?php include PUBLIC_PATH . '/includes/header.php'; ?>
@@ -196,6 +231,21 @@ $display_description = !empty($product['detail_description']) ? $product['detail
                                         <?= htmlspecialchars($size) ?>
                                     </button>
                                 <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if ($product['has_personalization'] === 'yes'): ?>
+                        <div class="product-option-group">
+                            <h3 class="option-title">Personalization <span class="option-optional">(Optional)</span></h3>
+                            <div class="personalization-input-wrapper">
+                                <input type="text" id="personalization_text" name="personalization_text" 
+                                       placeholder="Enter text to engrave, e.g. your name or initials" 
+                                       maxlength="20"
+                                       class="personalization-input">
+                                <div class="char-counter">
+                                    <span id="char-count">0</span>/20
+                                </div>
                             </div>
                         </div>
                     <?php endif; ?>
@@ -436,7 +486,8 @@ $display_description = !empty($product['detail_description']) ? $product['detail
                 addToCartBtn.disabled = true;
                 addToCartBtn.textContent = 'Adding...';
 
-                const result = await addToCart(productId, selectedColor, selectedSize, 1);
+                const personalizationText = document.getElementById('personalization_text')?.value || '';
+                const result = await addToCart(productId, selectedColor, selectedSize, 1, personalizationText);
 
                 addToCartBtn.disabled = false;
                 addToCartBtn.textContent = 'Add to Cart';
@@ -445,6 +496,17 @@ $display_description = !empty($product['detail_description']) ? $product['detail
                     addToCartError.textContent = result.message || 'Error adding to cart';
                     addToCartError.style.display = 'block';
                 }
+            });
+        }
+
+        // Character counter for personalization input
+        const personalizationInput = document.getElementById('personalization_text');
+        const charCount = document.getElementById('char-count');
+
+        if (personalizationInput && charCount) {
+            personalizationInput.addEventListener('input', function() {
+                const currentLength = this.value.length;
+                charCount.textContent = currentLength;
             });
         }
     </script>

@@ -32,7 +32,33 @@ function redirect(string $url): void {
  * Check if user is logged in
  */
 function is_logged_in(): bool {
-    return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
+    if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
+        return false;
+    }
+
+    // Check session timeout (30 minutes = 1800 seconds)
+    if (isset($_SESSION['last_activity'])) {
+        $inactive_time = time() - $_SESSION['last_activity'];
+        if ($inactive_time > 1800) {
+            // Session expired - clear user session keys manually (keep session/cookie alive for flash message)
+            unset($_SESSION['user_id']);
+            unset($_SESSION['user_naam']);
+            unset($_SESSION['user_email']);
+            unset($_SESSION['user_role']);
+            unset($_SESSION['logged_in']);
+            unset($_SESSION['last_activity']);
+            set_flash_message('error', 'Your session has expired. Please log in again.');
+            $_SESSION['just_expired'] = true;
+            return false;
+        }
+        // Update last activity timestamp
+        $_SESSION['last_activity'] = time();
+    } else {
+        // Set last_activity if not set (for existing sessions)
+        $_SESSION['last_activity'] = time();
+    }
+
+    return true;
 }
 
 /**
@@ -47,7 +73,22 @@ function is_admin(): bool {
  */
 function require_login(): void {
     if (!is_logged_in()) {
-        set_flash_message('error', 'Please login to continue.');
+        // Only set flash message if not already set (e.g., by session expiry)
+        if (!isset($_SESSION['flash'])) {
+            set_flash_message('error', 'Please login to continue.');
+        }
+        redirect(PUBLIC_URL . '/login.php');
+    }
+}
+
+/**
+ * Require active session — redirect to login if session just expired
+ * Called on all pages to handle session timeout immediately
+ */
+function require_active_session(): void {
+    is_logged_in(); // This checks timeout and sets just_expired flag if expired
+    if (isset($_SESSION['just_expired']) && $_SESSION['just_expired'] === true) {
+        unset($_SESSION['just_expired']);
         redirect(PUBLIC_URL . '/login.php');
     }
 }
@@ -186,6 +227,24 @@ function get_all_categories(PDO $pdo): array {
 }
 
 /**
+ * Get representative image for each category
+ */
+function get_category_representative_images(PDO $pdo): array {
+    $sql = "
+        SELECT 
+            c.id as category_id,
+            c.naam as category_name,
+            p.image_path
+        FROM categories c
+        LEFT JOIN products p ON p.category_id = c.id AND p.image_path IS NOT NULL
+        GROUP BY c.id
+        ORDER BY c.naam ASC
+    ";
+    $stmt = $pdo->query($sql);
+    return $stmt->fetchAll();
+}
+
+/**
  * Get category by name
  */
 function get_category_by_name(PDO $pdo, string $name): ?array {
@@ -193,6 +252,28 @@ function get_category_by_name(PDO $pdo, string $name): ?array {
     $stmt->execute(['naam' => $name]);
     $category = $stmt->fetch();
     return $category ?: null;
+}
+
+/**
+ * Get popular products (products marked as is_popular = 1)
+ */
+function get_popular_products(PDO $pdo, int $limit = 8): array {
+    $sql = "
+        SELECT 
+            p.id,
+            p.naam,
+            p.price,
+            p.image_path,
+            c.naam as category_name
+        FROM products p
+        JOIN categories c ON p.category_id = c.id
+        WHERE p.is_popular = 1
+        ORDER BY p.id ASC
+        LIMIT :limit
+    ";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute(['limit' => $limit]);
+    return $stmt->fetchAll();
 }
 
 /**

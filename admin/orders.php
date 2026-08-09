@@ -222,6 +222,7 @@ if ($view_order_id) {
                                 <th>Variant</th>
                                 <th>Quantity</th>
                                 <th>Price</th>
+                                <th>Engraving</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -236,6 +237,7 @@ if ($view_order_id) {
                                     </td>
                                     <td><?= $item['quantity'] ?></td>
                                     <td><?= format_price($item['price_at_order']) ?></td>
+                                    <td><?= htmlspecialchars($item['personalization_text'] ?? '-') ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>

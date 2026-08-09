@@ -62,6 +62,8 @@ $google_login_url = get_google_login_url();
 
             <?= display_flash_message() ?>
 
+            <script src="<?= PUBLIC_URL ?>/js/flash-message.js"></script>
+
             <?php if (!empty($errors)): ?>
                 <div class="flash-message flash-error">
                     <?php foreach ($errors as $error): ?>
@@ -87,14 +89,30 @@ $google_login_url = get_google_login_url();
 
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" 
-                           placeholder="Min 8 characters" required minlength="8">
+                    <div class="password-input-wrapper">
+                        <input type="password" id="password" name="password" 
+                               placeholder="Min 8 characters" required minlength="8">
+                        <button type="button" class="password-toggle-icon" aria-label="Show password">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="form-group">
                     <label for="confirm_password">Confirm Password</label>
-                    <input type="password" id="confirm_password" name="confirm_password" 
-                           placeholder="Confirm your password" required minlength="8">
+                    <div class="password-input-wrapper">
+                        <input type="password" id="confirm_password" name="confirm_password" 
+                               placeholder="Confirm your password" required minlength="8">
+                        <button type="button" class="password-toggle-icon" aria-label="Show password">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 <button type="submit" class="btn btn-primary btn-full" id="signup-btn">
@@ -121,5 +139,7 @@ $google_login_url = get_google_login_url();
             </div>
         </div>
     </div>
+
+    <script src="<?= PUBLIC_URL ?>/js/password-toggle.js"></script>
 </body>
 </html>

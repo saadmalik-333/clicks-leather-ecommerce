@@ -7,6 +7,10 @@ require_once INCLUDES_PATH . '/functions.php';
 
 // Fetch categories
 $categories = get_all_categories($pdo);
+$category_images = get_category_representative_images($pdo);
+
+// Fetch popular products
+$popular_products = get_popular_products($pdo, 8);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -38,27 +42,55 @@ $categories = get_all_categories($pdo);
         </div>
     </section>
 
-    <!-- 3-Column Showcase Section -->
-    <section class="showcase-section">
-        <div class="showcase-col">
-            <div class="placeholder-media static-bg"></div>
-            <div class="showcase-overlay">
-                <h3>Everyday Carry</h3>
-                <a href="#categories" class="btn btn-outline btn-sm">Shop Now</a>
+    <!-- Circular Category Showcase -->
+    <section class="circular-showcase-section">
+        <div class="section-header">
+            <h2>Explore Collections</h2>
+            <p>Browse our premium leather categories</p>
+        </div>
+        <div class="circular-showcase" id="circularShowcase">
+            <div class="circular-showcase-track">
+                <?php
+                // Build image lookup array
+                $image_lookup = [];
+                foreach ($category_images as $img) {
+                    $image_lookup[$img['category_name']] = $img['image_path'];
+                }
+                
+                // Define custom category order
+                $custom_order = ['Wallets', 'Ladies Bags', 'Leather Jackets', 'Laptop Bags', 'Backpacks', 'Duffel Bags', 'Leather Shoes'];
+                
+                // Reorder categories array to match custom order
+                $ordered_categories = [];
+                foreach ($custom_order as $category_name) {
+                    foreach ($categories as $cat) {
+                        if ($cat['naam'] === $category_name) {
+                            $ordered_categories[] = $cat;
+                            break;
+                        }
+                    }
+                }
+                
+                foreach ($ordered_categories as $cat):
+                    $category_slug = strtolower(str_replace(' ', '-', $cat['naam']));
+                    $image_path = $image_lookup[$cat['naam']] ?? null;
+                    $image_url = $image_path ? PUBLIC_URL . '/uploads/' . $image_path : PUBLIC_URL . '/img/placeholder.jpg';
+                ?>
+                    <a href="<?= PUBLIC_URL ?>/products.php?category=<?= $category_slug ?>" class="category-circle-wrapper">
+                        <div class="category-circle">
+                            <?php if ($image_path): ?>
+                                <img src="<?= $image_url ?>" alt="<?= htmlspecialchars($cat['naam']) ?>">
+                            <?php else: ?>
+                                <div class="category-circle-placeholder"></div>
+                            <?php endif; ?>
+                        </div>
+                        <span class="category-circle-label"><?= htmlspecialchars($cat['naam']) ?></span>
+                    </a>
+                <?php endforeach; ?>
             </div>
         </div>
-        <div class="showcase-col">
-            <div class="placeholder-media video-bg"></div>
-            <div class="showcase-overlay">
-                <h3>The Art of Craft</h3>
-            </div>
-        </div>
-        <div class="showcase-col">
-            <div class="placeholder-media static-bg-2"></div>
-            <div class="showcase-overlay">
-                <h3>Travel Collection</h3>
-                <a href="#categories" class="btn btn-outline btn-sm">Shop Now</a>
-            </div>
+        <div class="circular-showcase-progress">
+            <div class="circular-showcase-progress-bar" id="circularShowcaseProgress"></div>
         </div>
     </section>
 
@@ -69,82 +101,65 @@ $categories = get_all_categories($pdo);
             <p>Our bestselling handcrafted pieces</p>
         </div>
         <div class="featured-grid">
-            <div class="product-card">
-                <div class="product-img-placeholder"></div>
-                <h4>Classic Leather Wallet</h4>
-                <p>$85.00</p>
-            </div>
-            <div class="product-card">
-                <div class="product-img-placeholder"></div>
-                <h4>Weekender Duffle</h4>
-                <p>$350.00</p>
-            </div>
-            <div class="product-card">
-                <div class="product-img-placeholder"></div>
-                <h4>Minimalist Cardholder</h4>
-                <p>$45.00</p>
-            </div>
-            <div class="product-card">
-                <div class="product-img-placeholder"></div>
-                <h4>Heritage Briefcase</h4>
-                <p>$420.00</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Categories Section -->
-    <section class="categories-section" id="categories">
-        <div class="section-header">
-            <h2>Our Collections</h2>
-            <p>Explore our range of premium leather products</p>
-        </div>
-
-        <div class="categories-grid">
-            <?php 
-            $category_icons = [
-                'Wallets' => '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 10h20"/><circle cx="17" cy="14" r="1.5"/></svg>',
-                'Ladies Bags' => '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>',
-                'Leather Jackets' => '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L8 6H4v4l-2 2 2 2v4h4l4 4 4-4h4v-4l2-2-2-2V6h-4l-4-4z"/></svg>',
-                'Laptop Bags' => '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="2" y1="20" x2="22" y2="20"/></svg>',
-                'Backpacks' => '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 10V20a2 2 0 002 2h12a2 2 0 002-2V10"/><path d="M8 10V6a4 4 0 018 0v4"/><path d="M4 10h16"/><line x1="12" y1="14" x2="12" y2="18"/></svg>',
-                'Duffel Bags' => '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><ellipse cx="12" cy="12" rx="10" ry="6"/><path d="M2 12v0a10 6 0 0020 0"/><path d="M8 6v12"/><path d="M16 6v12"/></svg>',
-                'Leather Shoes' => '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 18h20v2H2z"/><path d="M4 18c0-6 2-10 4-12h8c2 2 4 6 4 12"/></svg>',
-            ];
-            
-            foreach ($categories as $cat): 
-                $icon = $category_icons[$cat['naam']] ?? '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/></svg>';
-                $category_slug = strtolower(str_replace(' ', '-', $cat['naam']));
+            <?php foreach ($popular_products as $product):
+                $product_slug = strtolower(str_replace(' ', '-', $product['naam']));
+                $image_url = $product['image_path'] ? PUBLIC_URL . '/uploads/' . $product['image_path'] : PUBLIC_URL . '/img/placeholder.jpg';
+                $category_slug = strtolower(str_replace(' ', '-', $product['category_name']));
             ?>
-                <a href="<?= PUBLIC_URL ?>/products.php?category=<?= $category_slug ?>" class="category-card" id="category-<?= $cat['id'] ?>">
-                    <div class="category-icon">
-                        <?= $icon ?>
+                <a href="<?= PUBLIC_URL ?>/products.php?category=<?= $category_slug ?>" class="featured-product-card">
+                    <div class="featured-product-image">
+                        <img src="<?= $image_url ?>" alt="<?= htmlspecialchars($product['naam']) ?>">
                     </div>
-                    <h3><?= htmlspecialchars($cat['naam']) ?></h3>
+                    <div class="featured-product-info">
+                        <h3 class="featured-product-name"><?= htmlspecialchars($product['naam']) ?></h3>
+                        <p class="featured-product-price"><?= format_price($product['price']) ?></p>
+                    </div>
                 </a>
             <?php endforeach; ?>
         </div>
     </section>
 
-    <!-- Trust Badges -->
-    <section class="trust-badges">
-        <div class="trust-badge">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5L20 7"></path></svg>
-            <span>WorldWide Shipping</span>
+    <!-- Promotional Banners Section -->
+    <section class="promotional-banners-section">
+        <div class="banners-top-row">
+            <div class="banner-card">
+                <div class="banner-image-wrapper">
+                    <div class="banner-placeholder" style="background-image: url('<?= PUBLIC_URL ?>/img/banner/shoes.jpeg'); background-size: cover; background-position: center;"></div>
+                    <div class="banner-overlay"></div>
+                    <div class="banner-content">
+                        <h3 class="banner-heading">Step Into Craftsmanship</h3>
+                        <p class="banner-subheading">Handcrafted Leather Shoes, Built to Last</p>
+                    </div>
+                </div>
+            </div>
+            <div class="banner-card">
+                <div class="banner-image-wrapper">
+                    <div class="banner-placeholder" style="background-image: url('<?= PUBLIC_URL ?>/img/banner/Jacket.jpeg'); background-size: cover; background-position: center;"></div>
+                    <div class="banner-overlay"></div>
+                    <div class="banner-content">
+                        <h3 class="banner-heading">Timeless Outerwear</h3>
+                        <p class="banner-subheading">Premium Leather Jackets for Every Season</p>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="trust-badge">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
-            <span>60 Day Returns</span>
-        </div>
-        <div class="trust-badge">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
-            <span>1 Year Warranty</span>
+        
+        <div class="banner-card banner-full-width">
+            <div class="banner-image-wrapper">
+                <div class="banner-placeholder" style="background-image: url('<?= PUBLIC_URL ?>/img/banner/bag.png'); background-size: cover; background-position: center;"></div>
+                <div class="banner-overlay"></div>
+                <div class="banner-content">
+                    <h3 class="banner-heading">Everyday Essentials</h3>
+                    <p class="banner-subheading">Crafted Leather Goods for the Modern Journey</p>
+                </div>
+            </div>
         </div>
     </section>
 
     <!-- Testimonials Section -->
     <section class="testimonials-section">
         <div class="section-header">
-            <h2>What Our Customers Say</h2>
+            <h2>Customer Reviews</h2>
         </div>
         <div class="testimonials-grid">
             <div class="review-card">
@@ -173,6 +188,7 @@ $categories = get_all_categories($pdo);
     <!-- Cart JavaScript -->
     <script src="<?= PUBLIC_URL ?>/js/cart.js"></script>
     <script src="<?= PUBLIC_URL ?>/js/header-scroll.js"></script>
+    <script src="<?= PUBLIC_URL ?>/js/circular-showcase.js"></script>
 
     <script>
         // Smooth scroll for anchor links

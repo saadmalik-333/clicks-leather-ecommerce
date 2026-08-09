@@ -3,6 +3,15 @@
  * Clicks Leather — Shared Header Include
  * Contains sticky header with announcement bar, main header, and navigation
  */
+
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Check for session expiry and redirect if needed
+require_once INCLUDES_PATH . '/functions.php';
+require_active_session();
 ?>
 <!-- Sticky Header Container -->
 <div class="header-container" id="site-header">
@@ -87,6 +96,8 @@
 <div style="position:fixed; top:80px; right:20px; z-index:1001; max-width:400px;">
     <?= display_flash_message() ?>
 </div>
+
+<script src="<?= PUBLIC_URL ?>/js/flash-message.js"></script>
 
 <!-- Search Script -->
 <script src="<?= PUBLIC_URL ?>/js/search.js"></script>

@@ -187,7 +187,7 @@
     }
 
     // Add to cart (for product detail page)
-    async function addToCart(productId, color, size, quantity = 1) {
+    async function addToCart(productId, color, size, quantity = 1, personalizationText = '') {
         try {
             const response = await fetch('cart-add.php', {
                 method: 'POST',
@@ -198,7 +198,8 @@
                     product_id: productId,
                     color: color,
                     size: size,
-                    quantity: quantity
+                    quantity: quantity,
+                    personalization_text: personalizationText
                 })
             });
             

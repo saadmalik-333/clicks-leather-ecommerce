@@ -788,10 +788,9 @@ $addresses = $addresses_stmt->fetchAll(PDO::FETCH_ASSOC);
         </nav>
     </div>
 
-    <!-- Flash Messages -->
-    <div style="position:fixed; top:80px; right:20px; z-index:1001; max-width:400px;">
-        <?= display_flash_message() ?>
-    </div>
+    <?= display_flash_message() ?>
+
+    <script src="<?= PUBLIC_URL ?>/js/flash-message.js"></script>
 
     <!-- Account Page Section -->
     <section class="account-page">
@@ -904,15 +903,39 @@ $addresses = $addresses_stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <input type="hidden" name="action" value="change_password">
                                 <div class="form-group">
                                     <label for="current_password">Current Password</label>
-                                    <input type="password" id="current_password" name="current_password" required>
+                                    <div class="password-input-wrapper">
+                                        <input type="password" id="current_password" name="current_password" required>
+                                        <button type="button" class="password-toggle-icon" aria-label="Show password">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                                <circle cx="12" cy="12" r="3"></circle>
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="form-group">
                                     <label for="new_password">New Password</label>
-                                    <input type="password" id="new_password" name="new_password" required minlength="6">
+                                    <div class="password-input-wrapper">
+                                        <input type="password" id="new_password" name="new_password" required minlength="6">
+                                        <button type="button" class="password-toggle-icon" aria-label="Show password">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                                <circle cx="12" cy="12" r="3"></circle>
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="form-group">
                                     <label for="confirm_password">Confirm New Password</label>
-                                    <input type="password" id="confirm_password" name="confirm_password" required minlength="6">
+                                    <div class="password-input-wrapper">
+                                        <input type="password" id="confirm_password" name="confirm_password" required minlength="6">
+                                        <button type="button" class="password-toggle-icon" aria-label="Show password">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                                <circle cx="12" cy="12" r="3"></circle>
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
                                 <button type="submit" class="btn btn-primary">Change Password</button>
                             </form>
@@ -1241,5 +1264,7 @@ $addresses = $addresses_stmt->fetchAll(PDO::FETCH_ASSOC);
             }
         });
     </script>
+
+    <script src="<?= PUBLIC_URL ?>/js/password-toggle.js"></script>
 </body>
 </html>

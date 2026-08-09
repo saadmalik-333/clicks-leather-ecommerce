@@ -33,6 +33,12 @@ try {
     $color = sanitize_input($input['color'] ?? '');
     $size = sanitize_input($input['size'] ?? '');
     $quantity = intval($input['quantity'] ?? 1);
+    $personalization_text = sanitize_input($input['personalization_text'] ?? '');
+    
+    // If personalization text is empty, set to null
+    if (empty($personalization_text)) {
+        $personalization_text = null;
+    }
     
     // Validate product
     if ($product_id <= 0) {
@@ -128,8 +134,8 @@ try {
         $stmt->execute([$new_quantity, $existing_item['id']]);
     } else {
         // Insert new item with discounted price
-        $stmt = $pdo->prepare("INSERT INTO cart_items (user_id, session_id, product_id, variant_id, quantity, discounted_price, discount_percent) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$user_id, $session_id, $product_id, $variant_id, $quantity, $discounted_price, $discount_percent]);
+        $stmt = $pdo->prepare("INSERT INTO cart_items (user_id, session_id, product_id, variant_id, quantity, discounted_price, discount_percent, personalization_text) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$user_id, $session_id, $product_id, $variant_id, $quantity, $discounted_price, $discount_percent, $personalization_text]);
     }
     
     // Get updated cart count

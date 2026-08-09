@@ -46,10 +46,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $price = floatval($_POST['price'] ?? 0);
         $category_id = intval($_POST['category_id'] ?? 0);
         $has_personalization = ($_POST['has_personalization'] ?? 'no') === 'yes' ? 'yes' : 'no';
+        $is_popular = ($_POST['is_popular'] ?? '0') === '1' ? 1 : 0;
 
         if (empty($naam)) $errors[] = 'Product name is required.';
         if ($price <= 0) $errors[] = 'Price must be greater than 0.';
         if ($category_id <= 0) $errors[] = 'Please select a category.';
+
+        // Validate is_popular: max 8 products can be popular
+        if ($is_popular === 1) {
+            // Check if this product is already popular
+            if ($product['is_popular'] != 1) {
+                // Count current popular products (excluding this one)
+                $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM products WHERE is_popular = 1 AND id != :id");
+                $stmt->execute([':id' => $product_id]);
+                $count = $stmt->fetch()['count'];
+                if ($count >= 8) {
+                    $errors[] = 'Maximum of 8 Most Popular products already selected. Turn one off first to add another.';
+                }
+            }
+        }
 
         // Handle main image upload (optional on edit)
         $image_filename = $product['image_path']; // Keep existing by default
@@ -144,7 +159,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Update product
                 $stmt = $pdo->prepare(
                     "UPDATE products SET naam = :naam, description = :description, detail_title = :detail_title, detail_description = :detail_description, price = :price,
-                     category_id = :category_id, has_personalization = :has_personalization,
+                     category_id = :category_id, has_personalization = :has_personalization, is_popular = :is_popular,
                      image_path = :image_path, image_path_alt = :image_path_alt WHERE id = :id"
                 );
                 $stmt->execute([
@@ -155,6 +170,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ':price'               => $price,
                     ':category_id'         => $category_id,
                     ':has_personalization'  => $has_personalization,
+                    ':is_popular'          => $is_popular,
                     ':image_path'          => $image_filename,
                     ':image_path_alt'      => $image_alt_filename,
                     ':id'                  => $product_id
@@ -280,6 +296,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <span class="toggle-btn">Yes</span>
                         </label>
                     </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Mark as Most Popular?</label>
+                    <div class="toggle-group">
+                        <label class="toggle-label">
+                            <input type="radio" name="is_popular" value="0"
+                                   <?= ($product['is_popular'] ?? 0) != 1 ? 'checked' : '' ?>>
+                            <span class="toggle-btn">No</span>
+                        </label>
+                        <label class="toggle-label">
+                            <input type="radio" name="is_popular" value="1"
+                                   <?= ($product['is_popular'] ?? 0) == 1 ? 'checked' : '' ?>>
+                            <span class="toggle-btn">Yes</span>
+                        </label>
+                    </div>
+                    <p class="form-hint">Maximum 8 products can be marked as Most Popular.</p>
                 </div>
 
                 <h3 class="form-section-title" style="margin-top: var(--space-xl);">Product Detail Page Content</h3>
@@ -454,5 +487,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </form>
 </div>
+
+<script>
+document.getElementById('edit-product-form').addEventListener('submit', function(e) {
+    const isPopularRadios = document.getElementsByName('is_popular');
+    let isPopular = false;
+    for (const radio of isPopularRadios) {
+        if (radio.checked && radio.value === '1') {
+            isPopular = true;
+            break;
+        }
+    }
+    
+    if (isPopular) {
+        // Check if this product is already popular
+        const currentIsPopular = <?= ($product['is_popular'] ?? 0) == 1 ? 'true' : 'false' ?>;
+        
+        if (!currentIsPopular) {
+            // Fetch current popular count via AJAX
+            fetch('<?= ADMIN_URL ?>/api/check_popular_count.php?exclude_id=<?= $product_id ?>')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.count >= 8) {
+                        e.preventDefault();
+                        alert('Maximum of 8 Most Popular products already selected. Turn one off first to add another.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking popular count:', error);
+                    // Allow submission on error (server-side will catch it)
+                });
+        }
+    }
+});
+</script>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

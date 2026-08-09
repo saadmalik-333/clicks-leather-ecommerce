@@ -12,6 +12,9 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Check for session expiry and redirect immediately (before any cart logic)
+require_active_session();
+
 // Ensure cart session ID exists
 if (!isset($_SESSION['cart_session_id'])) {
     $_SESSION['cart_session_id'] = uniqid('cart_', true);
@@ -29,6 +32,7 @@ if ($user_id) {
             ci.quantity,
             ci.discounted_price,
             ci.discount_percent,
+            ci.personalization_text,
             p.id as product_id,
             p.naam as product_name,
             p.price,
@@ -51,6 +55,7 @@ if ($user_id) {
             ci.quantity,
             ci.discounted_price,
             ci.discount_percent,
+            ci.personalization_text,
             p.id as product_id,
             p.naam as product_name,
             p.price,
@@ -211,8 +216,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $order_item_sql = "
                     INSERT INTO order_items (
                         order_id, product_id, variant_id, 
-                        quantity, price_at_order
-                    ) VALUES (?, ?, ?, ?, ?)
+                        quantity, price_at_order, personalization_text
+                    ) VALUES (?, ?, ?, ?, ?, ?)
                 ";
                 $order_item_stmt = $pdo->prepare($order_item_sql);
                 $order_item_stmt->execute([
@@ -220,7 +225,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $item['product_id'],
                     $item['variant_id'],
                     $item['quantity'],
-                    $item_price
+                    $item_price,
+                    $item['personalization_text'] ?? null
                 ]);
             }
 
@@ -261,6 +267,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ];
 }
 
+
 $countries = [
     'United States', 'United Kingdom', 'Canada', 'Australia', 
     'Germany', 'France', 'Italy', 'Spain', 'Netherlands', 
@@ -279,6 +286,7 @@ $countries = [
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= PUBLIC_URL ?>/css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@29.1.1/dist/css/intlTelInput.min.css">
     <style>
         .checkout-container {
             max-width: 1200px;
@@ -458,6 +466,105 @@ $countries = [
             margin: 0.5rem 0 0 1.5rem;
         }
 
+        /* intl-tel-input styling overrides */
+        .iti {
+            width: 100%;
+            max-width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .iti__flag-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-right: none;
+            border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+        }
+
+        .iti__selected-flag {
+            padding: 0 8px 0 10px;
+        }
+
+        .iti__country-list {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 9999;
+            position: absolute;
+        }
+
+        .iti__country {
+            color: var(--text-primary);
+        }
+
+        .iti__country:hover {
+            background: rgba(140, 92, 56, 0.08);
+        }
+
+        .iti__country.iti__highlight {
+            background: rgba(140, 92, 56, 0.12);
+        }
+
+        .iti__dial-code {
+            color: var(--text-secondary);
+        }
+
+        .iti__selected-dial-code {
+            color: var(--text-primary);
+            font-weight: 400;
+        }
+
+        .iti__country-name {
+            font-family: var(--font-body);
+            font-size: 0.875rem;
+        }
+
+        .iti__search-input-wrapper {
+            border-bottom: none;
+        }
+
+        .iti__search-input {
+            width: calc(100% - 1rem);
+            padding: 0.5rem 0.5rem 0.5rem 2.5rem !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            font-family: var(--font-body);
+            color: var(--text-primary);
+            background: var(--bg-card);
+            margin: 0.5rem;
+        }
+
+        .iti__search-input:focus {
+            outline: none;
+            border-color: var(--color-primary) !important;
+            box-shadow: 0 0 0 3px rgba(140, 92, 56, 0.1);
+        }
+
+        .iti__search-icon {
+            left: 1rem !important;
+        }
+
+        #phone {
+            width: 100%;
+            padding: 0.75rem 0.75rem 0.75rem 52px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            background: var(--bg-card);
+            font-family: var(--font-body);
+            transition: border-color 0.2s ease;
+        }
+
+        #phone:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
         @media (max-width: 768px) {
             .checkout-grid {
                 grid-template-columns: 1fr;
@@ -511,7 +618,6 @@ $countries = [
                                 <label for="phone">Phone <span class="required">*</span></label>
                                 <input type="tel" id="phone" name="phone" 
                                        value="<?= htmlspecialchars($form_data['phone']) ?>" 
-                                       placeholder="+92 300 1234567"
                                        required>
                             </div>
                         </div>
@@ -642,7 +748,7 @@ $countries = [
                     </div>
                     <div class="summary-row">
                         <span>Shipping</span>
-                        <span><?= format_price($shipping_cost) ?></span>
+                        <span><?= $shipping_is_free === 'yes' ? 'Free' : format_price($shipping_cost) ?></span>
                     </div>
                     <div class="summary-row total">
                         <span>Total</span>
@@ -662,5 +768,216 @@ $countries = [
     <!-- Cart JavaScript -->
     <script src="<?= PUBLIC_URL ?>/js/cart.js"></script>
     <script src="<?= PUBLIC_URL ?>/js/header-scroll.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@29.1.1/dist/js/intlTelInput.min.js"></script>
+
+    <!-- Country-based placeholder updater -->
+    <script>
+        (function() {
+            const countryExamples = {
+                'United States': {
+                    address: '123 Main Street, Apt 4B',
+                    city: 'New York',
+                    state: 'New York',
+                    postal: '10001'
+                },
+                'United Kingdom': {
+                    address: '42 Baker Street',
+                    city: 'London',
+                    state: 'England',
+                    postal: 'SW1A 1AA'
+                },
+                'Canada': {
+                    address: '789 Queen Street West',
+                    city: 'Toronto',
+                    state: 'Ontario',
+                    postal: 'M5H 2N2'
+                },
+                'Australia': {
+                    address: '10 Collins Street',
+                    city: 'Melbourne',
+                    state: 'Victoria',
+                    postal: '3000'
+                },
+                'Germany': {
+                    address: 'Unter den Linden 10',
+                    city: 'Berlin',
+                    state: 'Berlin',
+                    postal: '10117'
+                },
+                'France': {
+                    address: '5 Avenue des Champs-Élysées',
+                    city: 'Paris',
+                    state: 'Île-de-France',
+                    postal: '75008'
+                },
+                'Italy': {
+                    address: 'Via Roma 123',
+                    city: 'Milan',
+                    state: 'Lombardy',
+                    postal: '20121'
+                },
+                'Spain': {
+                    address: 'Calle Gran Vía 45',
+                    city: 'Madrid',
+                    state: 'Madrid',
+                    postal: '28013'
+                },
+                'Netherlands': {
+                    address: 'Herengracht 123',
+                    city: 'Amsterdam',
+                    state: 'North Holland',
+                    postal: '1015 BT'
+                },
+                'Belgium': {
+                    address: 'Rue de la Loi 16',
+                    city: 'Brussels',
+                    state: 'Brussels',
+                    postal: '1000'
+                },
+                'Switzerland': {
+                    address: 'Bahnhofstrasse 10',
+                    city: 'Zurich',
+                    state: 'Zurich',
+                    postal: '8001'
+                },
+                'Austria': {
+                    address: 'Kärntner Straße 10',
+                    city: 'Vienna',
+                    state: 'Vienna',
+                    postal: '1010'
+                },
+                'Sweden': {
+                    address: 'Drottninggatan 10',
+                    city: 'Stockholm',
+                    state: 'Stockholm',
+                    postal: '111 22'
+                },
+                'Norway': {
+                    address: 'Karl Johans gate 10',
+                    city: 'Oslo',
+                    state: 'Oslo',
+                    postal: '0154'
+                },
+                'Denmark': {
+                    address: 'Strøget 10',
+                    city: 'Copenhagen',
+                    state: 'Capital Region',
+                    postal: '1000'
+                },
+                'Finland': {
+                    address: 'Aleksanterinkatu 10',
+                    city: 'Helsinki',
+                    state: 'Uusimaa',
+                    postal: '00100'
+                },
+                'Ireland': {
+                    address: 'Grafton Street 10',
+                    city: 'Dublin',
+                    state: 'Dublin',
+                    postal: 'D02 P123'
+                },
+                'Portugal': {
+                    address: 'Avenida da Liberdade 10',
+                    city: 'Lisbon',
+                    state: 'Lisbon',
+                    postal: '1250-142'
+                },
+                'Greece': {
+                    address: 'Ermou Street 10',
+                    city: 'Athens',
+                    state: 'Attica',
+                    postal: '105 55'
+                },
+                'Pakistan': {
+                    address: 'House #123, Main Boulevard',
+                    city: 'Lahore',
+                    state: 'Punjab',
+                    postal: '54000'
+                },
+                'India': {
+                    address: '45 MG Road, Block B',
+                    city: 'Mumbai',
+                    state: 'Maharashtra',
+                    postal: '400001'
+                },
+                'UAE': {
+                    address: 'Sheikh Zayed Road, Tower A',
+                    city: 'Dubai',
+                    state: 'Dubai',
+                    postal: '12345'
+                },
+                'Saudi Arabia': {
+                    address: 'Olaya Street, Building 12',
+                    city: 'Riyadh',
+                    state: 'Riyadh',
+                    postal: '12345'
+                },
+                'Other': {
+                    address: 'Street address, building',
+                    city: 'City name',
+                    state: 'State/Province',
+                    postal: 'Postal/ZIP code'
+                }
+            };
+
+            const countrySelect = document.getElementById('country');
+            const phoneField = document.getElementById('phone');
+            const addressField = document.getElementById('address_line1');
+            const cityField = document.getElementById('city');
+            const stateField = document.getElementById('state');
+            const postalField = document.getElementById('postal_code');
+
+            function updatePlaceholders() {
+                const selectedCountry = countrySelect.value;
+                const examples = countryExamples[selectedCountry] || countryExamples['Other'];
+
+                if (addressField) addressField.placeholder = examples.address;
+                if (cityField) cityField.placeholder = examples.city;
+                if (stateField) stateField.placeholder = examples.state;
+                if (postalField) postalField.placeholder = examples.postal;
+            }
+
+            // Initialize intl-tel-input
+            let iti = null;
+            if (phoneField) {
+                iti = intlTelInput(phoneField, {
+                    initialCountry: 'pk',
+                    separateDialCode: true,
+                    placeholderNumberPolicy: "POLITE",
+                    loadUtils: () => import('https://cdn.jsdelivr.net/npm/intl-tel-input@29.1.1/dist/js/utils.js')
+                });
+
+                // Restore country from existing phone value if present
+                if (phoneField.value) {
+                    iti.setNumber(phoneField.value);
+                }
+            }
+
+            if (countrySelect) {
+                countrySelect.addEventListener('change', function() {
+                    updatePlaceholders();
+                });
+                // Initialize on page load
+                updatePlaceholders();
+            }
+
+            // Format phone number on form submission
+            const checkoutForm = document.querySelector('form');
+            if (checkoutForm && iti) {
+                checkoutForm.addEventListener('submit', function(e) {
+                    // Validate phone number before submission
+                    if (!iti.isValidNumber()) {
+                        e.preventDefault();
+                        alert('Please enter a valid phone number for the selected country.');
+                        phoneField.focus();
+                        return;
+                    }
+
+                    // Format to E164 for server submission
+                    phoneField.value = iti.getNumber('E164');
+                });
+            }
+        })();
+    </script>
 </body>
 </html>

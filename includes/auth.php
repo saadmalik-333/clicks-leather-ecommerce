@@ -211,6 +211,7 @@ function set_user_session(array $user): void {
     $_SESSION['user_email'] = $user['email'];
     $_SESSION['user_role'] = $user['role'];
     $_SESSION['logged_in'] = true;
+    $_SESSION['last_activity'] = time();
 }
 
 /**

@@ -133,3 +133,5 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
         <div class="admin-content">
             <?= display_flash_message() ?>
+
+            <script src="<?= PUBLIC_URL ?>/js/flash-message.js"></script>
