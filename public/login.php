@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $old_email = htmlspecialchars($email);
 
-        $result = login_user($pdo, $email, $password);
+        $result = login_user($pdo, $email, $password, true);
 
         if ($result['success']) {
             set_flash_message('success', $result['message']);
@@ -46,6 +46,12 @@ $google_login_url = get_google_login_url();
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= PUBLIC_URL ?>/css/style.css">
+    <meta property="og:title" content="Login — Clicks Leather">
+    <meta property="og:description" content="Login to your Clicks Leather account — access your orders and premium leather collection.">
+    <meta property="og:image" content="<?= PUBLIC_URL ?>/img/logo/clicks_leather_logo_dark_transparent.png">
+    <meta property="og:url" content="<?= PUBLIC_URL ?>/login.php">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
 </head>
 <body class="auth-page">
     <div class="auth-container">
@@ -111,8 +117,7 @@ $google_login_url = get_google_login_url();
             </a>
 
             <div class="auth-footer">
-                <p>Don't have an account? <a href="<?= PUBLIC_URL ?>/signup.php">Sign up here</a></p>
-                <p class="admin-link"><a href="<?= ADMIN_URL ?>/login.php">Admin Login →</a></p>
+                <p>Don't have an account? <a href="<?= PUBLIC_URL ?>/signup.php<?= isset($_GET['redirect']) && $_GET['redirect'] === 'checkout' ? '?redirect=checkout' : '' ?>">Sign up here</a></p>
             </div>
         </div>
     </div>

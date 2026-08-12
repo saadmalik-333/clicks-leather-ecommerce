@@ -20,6 +20,12 @@ if (!isset($_SESSION['cart_session_id'])) {
     $_SESSION['cart_session_id'] = uniqid('cart_', true);
 }
 
+// Restore form data if returning from login
+if (isset($_SESSION['checkout_form_data'])) {
+    $form_data = $_SESSION['checkout_form_data'];
+    unset($_SESSION['checkout_form_data']);
+}
+
 // Redirect if cart is empty
 $user_id = is_logged_in() ? $_SESSION['user_id'] : null;
 $session_id = $user_id ? null : $_SESSION['cart_session_id'];
@@ -178,6 +184,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // If no errors, create order
     if (empty($errors)) {
+        // Require login to place order
+        if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
+            // Store form data in session for restoration after login
+            $_SESSION['checkout_form_data'] = $form_data;
+            
+            // Store guest cart session ID for merge after login
+            $_SESSION['guest_cart_session_id'] = $_SESSION['cart_session_id'];
+            
+            // Set flash message
+            set_flash_message('info', 'Please login or create an account to complete your order.');
+            
+            // Redirect to login with return URL
+            redirect(PUBLIC_URL . '/login.php?redirect=checkout');
+        }
+
         try {
             $pdo->beginTransaction();
 
@@ -286,6 +307,12 @@ $countries = [
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= PUBLIC_URL ?>/css/style.css">
+    <meta property="og:title" content="Checkout — Clicks Leather">
+    <meta property="og:description" content="Checkout — Clicks Leather. Premium handcrafted leather goods.">
+    <meta property="og:image" content="<?= PUBLIC_URL ?>/img/logo/clicks_leather_logo_dark_transparent.png">
+    <meta property="og:url" content="<?= PUBLIC_URL ?>/checkout.php">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@29.1.1/dist/css/intlTelInput.min.css">
     <style>
         .checkout-container {

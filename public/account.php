@@ -341,6 +341,12 @@ $addresses = $addresses_stmt->fetchAll(PDO::FETCH_ASSOC);
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= PUBLIC_URL ?>/css/style.css">
+    <meta property="og:title" content="My Account — Clicks Leather">
+    <meta property="og:description" content="Clicks Leather — My Account">
+    <meta property="og:image" content="<?= PUBLIC_URL ?>/img/logo/clicks_leather_logo_dark_transparent.png">
+    <meta property="og:url" content="<?= PUBLIC_URL ?>/account.php">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
     <style>
         .account-page {
             padding: 3rem 1rem;
@@ -844,11 +850,14 @@ $addresses = $addresses_stmt->fetchAll(PDO::FETCH_ASSOC);
                             </div>
                         <?php else: ?>
                             <div class="orders-list">
-                                <?php foreach ($orders as $order): ?>
+                                <?php 
+                                $sequential_number = 1;
+                                foreach ($orders as $order): 
+                                ?>
                                     <div class="order-card">
                                         <div class="order-header">
                                             <div class="order-number">
-                                                <strong>Order #<?= str_pad($order['id'], 6, '0', STR_PAD_LEFT) ?></strong>
+                                                <strong>Order <?= $sequential_number ?></strong>
                                             </div>
                                             <div class="order-date">
                                                 <?= date('M d, Y', strtotime($order['created_at'])) ?>
@@ -868,7 +877,10 @@ $addresses = $addresses_stmt->fetchAll(PDO::FETCH_ASSOC);
                                             </div>
                                         </div>
                                     </div>
-                                <?php endforeach; ?>
+                                <?php 
+                                    $sequential_number++;
+                                endforeach; 
+                                ?>
                             </div>
                         <?php endif; ?>
                     </div>

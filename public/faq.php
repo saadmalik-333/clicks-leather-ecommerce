@@ -15,6 +15,12 @@ require_once INCLUDES_PATH . '/functions.php';
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= PUBLIC_URL ?>/css/style.css">
+    <meta property="og:title" content="FAQ — Clicks Leather">
+    <meta property="og:description" content="Frequently Asked Questions about Clicks Leather products, returns, and shipping.">
+    <meta property="og:image" content="<?= PUBLIC_URL ?>/img/logo/clicks_leather_logo_dark_transparent.png">
+    <meta property="og:url" content="<?= PUBLIC_URL ?>/faq.php">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
     <style>
         .faq-page {
             padding: 4rem 1rem 3rem;

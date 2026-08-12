@@ -78,6 +78,12 @@ $display_description = !empty($product['detail_description']) ? $product['detail
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= PUBLIC_URL ?>/css/style.css">
+    <meta property="og:title" content="<?= htmlspecialchars($display_title) ?> — Clicks Leather">
+    <meta property="og:description" content="Clicks Leather — <?= htmlspecialchars($display_title) ?>. Premium handcrafted leather goods.">
+    <meta property="og:image" content="<?= PUBLIC_URL ?>/uploads/<?= htmlspecialchars($product['image_path']) ?>">
+    <meta property="og:url" content="<?= PUBLIC_URL ?>/product-detail.php?id=<?= htmlspecialchars($product['id']) ?>">
+    <meta property="og:type" content="product">
+    <meta name="twitter:card" content="summary_large_image">
     <style>
         .option-optional {
             font-weight: 400;
@@ -161,7 +167,7 @@ $display_description = !empty($product['detail_description']) ? $product['detail
                             <?php foreach ($gallery_images as $index => $img): ?>
                                 <button class="thumbnail <?= $index === 0 ? 'active' : '' ?>" data-index="<?= $index ?>">
                                     <img src="<?= PUBLIC_URL ?>/uploads/<?= htmlspecialchars($img['image_path']) ?>" 
-                                         alt="Thumbnail <?= $index + 1 ?>">
+                                         alt="<?= htmlspecialchars($display_title) ?> - Thumbnail <?= $index + 1 ?>">
                                 </button>
                             <?php endforeach; ?>
                         </div>

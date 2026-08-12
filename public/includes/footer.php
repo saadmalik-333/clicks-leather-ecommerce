@@ -15,26 +15,26 @@
         <div class="footer-col">
             <h4>Shop</h4>
             <ul>
-                <li><a href="#">Wallets</a></li>
-                <li><a href="#">Bags</a></li>
-                <li><a href="#">Accessories</a></li>
+                <li><a href="<?= PUBLIC_URL ?>/products.php?category=wallets">Wallets</a></li>
+                <li><a href="<?= PUBLIC_URL ?>/products.php?category=leather-jackets">Leather Jackets</a></li>
+                <li><a href="<?= PUBLIC_URL ?>/products.php?category=laptop-bags">Laptop Bags</a></li>
             </ul>
         </div>
         <div class="footer-col">
             <h4>Company</h4>
             <ul>
                 <li><a href="<?= PUBLIC_URL ?>/about.php">About Us</a></li>
-                <li><a href="#">Contact</a></li>
-                <li><a href="#">Journal</a></li>
+                <li><a href="<?= PUBLIC_URL ?>/contact.php">Contact</a></li>
+                <li><a href="<?= PUBLIC_URL ?>/faq.php">FAQ</a></li>
             </ul>
         </div>
         <div class="footer-col">
             <h4>Support</h4>
             <ul>
-                <li><a href="<?= PUBLIC_URL ?>/faq.php">FAQ</a></li>
+                
                 <li><a href="<?= PUBLIC_URL ?>/shipping-info.php">Shipping Info</a></li>
                 <li><a href="<?= PUBLIC_URL ?>/return-policy.php">Return Policy</a></li>
-                <li><a href="#">Warranty</a></li>
+                <li><a href="<?= PUBLIC_URL ?>/warranty.php">Warranty</a></li>
             </ul>
         </div>
         <div class="footer-col newsletter-col">

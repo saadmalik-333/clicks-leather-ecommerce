@@ -11,22 +11,12 @@ $total_orders   = $pdo->query("SELECT COUNT(*) FROM orders")->fetchColumn();
 $total_users    = $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'customer'")->fetchColumn();
 $total_revenue  = $pdo->query("SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE status != 'cancelled'")->fetchColumn();
 
-// Fetch recent orders (last 10)
+// Fetch recent orders (last 5)
 $recent_orders = $pdo->query(
     "SELECT o.* 
      FROM orders o 
      ORDER BY o.created_at DESC 
-     LIMIT 10"
-)->fetchAll();
-
-// Fetch low stock products (stock <= 5)
-$low_stock = $pdo->query(
-    "SELECT p.naam, pv.size, pv.color, pv.stock_quantity 
-     FROM product_variants pv 
-     JOIN products p ON pv.product_id = p.id 
-     WHERE pv.stock_quantity <= 5 
-     ORDER BY pv.stock_quantity ASC 
-     LIMIT 10"
+     LIMIT 5"
 )->fetchAll();
 ?>
 
@@ -144,36 +134,5 @@ $low_stock = $pdo->query(
         </div>
     <?php endif; ?>
 </div>
-
-<!-- Low Stock Alert -->
-<?php if (!empty($low_stock)): ?>
-<div class="dashboard-section">
-    <h3 class="section-title">⚠️ Low Stock Alert</h3>
-    <div class="table-responsive">
-        <table class="data-table" id="low-stock-table">
-            <thead>
-                <tr>
-                    <th>Product</th>
-                    <th>Size</th>
-                    <th>Color</th>
-                    <th>Stock</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($low_stock as $item): ?>
-                    <tr>
-                        <td><?= htmlspecialchars($item['naam']) ?></td>
-                        <td><?= htmlspecialchars($item['size'] ?? '—') ?></td>
-                        <td><?= htmlspecialchars($item['color'] ?? '—') ?></td>
-                        <td>
-                            <span class="stock-warning"><?= $item['stock_quantity'] ?></span>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
-</div>
-<?php endif; ?>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

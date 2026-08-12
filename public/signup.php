@@ -30,8 +30,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $result = register_user($pdo, $naam, $email, $password, $confirm_password);
 
         if ($result['success']) {
+            // Get safe redirect
+            $redirect_after = $_GET['redirect'] ?? 'login';
+            if ($redirect_after === 'checkout') {
+                $redirect_after = PUBLIC_URL . '/login.php?redirect=checkout';
+            } else {
+                $redirect_after = PUBLIC_URL . '/login.php';
+            }
+            
             set_flash_message('success', $result['message']);
-            redirect(PUBLIC_URL . '/login.php');
+            redirect($redirect_after);
         } else {
             $errors[] = $result['message'];
         }
@@ -50,6 +58,12 @@ $google_login_url = get_google_login_url();
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= PUBLIC_URL ?>/css/style.css">
+    <meta property="og:title" content="Sign Up — Clicks Leather">
+    <meta property="og:description" content="Create your Clicks Leather account — premium leather goods handcrafted for you.">
+    <meta property="og:image" content="<?= PUBLIC_URL ?>/img/logo/clicks_leather_logo_dark_transparent.png">
+    <meta property="og:url" content="<?= PUBLIC_URL ?>/signup.php">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
 </head>
 <body class="auth-page">
     <div class="auth-container">

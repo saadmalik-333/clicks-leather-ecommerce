@@ -66,6 +66,12 @@ $total_items = array_sum(array_column($order_items, 'quantity'));
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= PUBLIC_URL ?>/css/style.css">
+    <meta property="og:title" content="Order Confirmation — Clicks Leather">
+    <meta property="og:description" content="Order Confirmation — Clicks Leather. Premium handcrafted leather goods.">
+    <meta property="og:image" content="<?= PUBLIC_URL ?>/img/logo/clicks_leather_logo_dark_transparent.png">
+    <meta property="og:url" content="<?= PUBLIC_URL ?>/order-confirmation.php">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
     <style>
         .confirmation-container {
             max-width: 800px;

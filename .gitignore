@@ -1,0 +1,46 @@
+# Environment and secrets
+.env
+.env.local
+.env.production
+
+# Database config with real credentials
+# NOTE: includes/db_connect.php is already in git history
+# If it contains real credentials, it needs to be removed from git history separately
+includes/db_connect.php
+
+# Google OAuth config with real credentials
+# NOTE: includes/google_config.php is already in git history with placeholders
+# If real keys are added later, this file should be removed from git history
+includes/google_config.php
+
+# Dependency folders
+vendor/
+node_modules/
+
+# Uploads folder (product images, user uploads)
+public/uploads/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary files
+*.tmp
+*.temp
+.cache/

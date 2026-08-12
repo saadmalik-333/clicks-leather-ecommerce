@@ -4,6 +4,16 @@
  */
 require_once __DIR__ . '/../includes/db_connect.php';
 require_once INCLUDES_PATH . '/functions.php';
+
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Check for session expiry BEFORE any HTML output (only if user was logged in)
+if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
+    require_active_session();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -15,6 +25,12 @@ require_once INCLUDES_PATH . '/functions.php';
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= PUBLIC_URL ?>/css/style.css">
+    <meta property="og:title" content="About Us — Clicks Leather">
+    <meta property="og:description" content="About Clicks Leather — Premium handcrafted leather goods made with 100% authentic leather.">
+    <meta property="og:image" content="<?= PUBLIC_URL ?>/img/logo/clicks_leather_logo_dark_transparent.png">
+    <meta property="og:url" content="<?= PUBLIC_URL ?>/about.php">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
     <style>
         .about-page {
             min-height: calc(100vh - 200px);
@@ -26,7 +42,7 @@ require_once INCLUDES_PATH . '/functions.php';
         .about-hero-section {
             position: relative;
             width: 100%;
-            height: 440px;
+            height: 455px;
             margin-bottom: var(--space-2xl);
         }
 
@@ -45,7 +61,7 @@ require_once INCLUDES_PATH . '/functions.php';
         .hero-overlay {
             position: absolute;
             inset: 0;
-            background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.3) 50%, rgba(0, 0, 0, 0.1) 100%);
+            background: rgba(0, 0, 0, 0.5);
         }
 
         .hero-content {
@@ -113,7 +129,7 @@ require_once INCLUDES_PATH . '/functions.php';
 
         .split-image {
             aspect-ratio: 4/3;
-            border-radius: var(--radius-md);
+            border-radius: 0;
             overflow: hidden;
         }
 
@@ -121,6 +137,7 @@ require_once INCLUDES_PATH . '/functions.php';
             width: 100%;
             height: 100%;
             background: linear-gradient(135deg, #B48560 0%, #8c5c38 100%);
+            filter: brightness(0.9);
         }
 
         .section-heading {

@@ -1,6 +1,6 @@
 <?php
 /**
- * Clicks Leather — Return & Refund Policy Page
+ * Clicks Leather — Warranty Policy Page
  */
 require_once __DIR__ . '/../includes/db_connect.php';
 require_once INCLUDES_PATH . '/functions.php';
@@ -20,26 +20,26 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Return & Refund Policy for Clicks Leather. Learn about our 14-day return policy for damaged items and fit issues.">
-    <title>Return & Refund Policy — Clicks Leather</title>
+    <meta name="description" content="Warranty Policy for Clicks Leather. Learn about our 1 year warranty coverage for manufacturing defects.">
+    <title>Warranty Policy — Clicks Leather</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= PUBLIC_URL ?>/css/style.css">
-    <meta property="og:title" content="Return & Refund Policy — Clicks Leather">
-    <meta property="og:description" content="Return & Refund Policy for Clicks Leather. Learn about our 14-day return policy for damaged items and fit issues.">
+    <meta property="og:title" content="Warranty Policy — Clicks Leather">
+    <meta property="og:description" content="Warranty Policy for Clicks Leather. Learn about our 1 year warranty coverage for manufacturing defects.">
     <meta property="og:image" content="<?= PUBLIC_URL ?>/img/logo/clicks_leather_logo_dark_transparent.png">
-    <meta property="og:url" content="<?= PUBLIC_URL ?>/return-policy.php">
+    <meta property="og:url" content="<?= PUBLIC_URL ?>/warranty.php">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
     <style>
-        .policy-page {
+        .warranty-page {
             padding: 0;
             min-height: calc(100vh - 200px);
             max-width: 100%;
             overflow-x: hidden;
         }
 
-        .policy-hero {
+        .warranty-hero {
             position: relative;
             width: 100%;
             height: 455px;
@@ -52,7 +52,7 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
             margin-bottom: 3rem;
         }
 
-        .policy-hero::before {
+        .warranty-hero::before {
             content: '';
             position: absolute;
             top: 0;
@@ -63,7 +63,7 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
             z-index: 1;
         }
 
-        .policy-hero h1 {
+        .warranty-hero h1 {
             font-family: var(--font-display);
             font-size: 2rem;
             margin-bottom: 1rem;
@@ -73,7 +73,7 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
             z-index: 2;
         }
 
-        .policy-hero p {
+        .warranty-hero p {
             color: rgba(255, 255, 255, 0.85);
             font-size: 1.1rem;
             margin-top: 0.5rem;
@@ -81,7 +81,7 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
             z-index: 2;
         }
 
-        .policy-layout {
+        .warranty-layout {
             display: grid;
             grid-template-columns: 250px 1fr;
             gap: 0;
@@ -90,27 +90,27 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
             padding: 0 2rem;
         }
 
-        .policy-sidebar {
+        .warranty-sidebar {
             position: sticky;
             top: 2rem;
             height: fit-content;
         }
 
-        .policy-sidebar nav {
+        .warranty-sidebar nav {
             padding-top: 3rem;
         }
 
-        .policy-sidebar nav ul {
+        .warranty-sidebar nav ul {
             list-style: none;
             padding: 0;
             margin: 0;
         }
 
-        .policy-sidebar nav li {
+        .warranty-sidebar nav li {
             margin-bottom: 0.5rem;
         }
 
-        .policy-sidebar nav a {
+        .warranty-sidebar nav a {
             color: var(--text-secondary);
             text-decoration: none;
             font-size: 0.8rem;
@@ -124,7 +124,7 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
             border-left: 2px solid transparent;
         }
 
-        .policy-sidebar nav a:hover {
+        .warranty-sidebar nav a:hover {
             color: var(--color-primary);
             border-left-color: var(--color-primary);
         }
@@ -138,13 +138,13 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
             margin-bottom: 1rem;
         }
 
-        .policy-content {
+        .warranty-content {
             background: var(--bg-card-hover);
             padding: 3rem;
             border-radius: var(--radius-sm);
         }
 
-        .policy-content h2 {
+        .warranty-content h2 {
             font-family: var(--font-display);
             font-size: 1.6rem;
             margin-bottom: 1.5rem;
@@ -154,22 +154,22 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
             margin-top: -2rem;
         }
 
-        .policy-section {
+        .warranty-section {
             margin-bottom: 3rem;
         }
 
-        .policy-section:last-child {
+        .warranty-section:last-child {
             margin-bottom: 0;
         }
 
-        .policy-section p {
+        .warranty-section p {
             color: var(--text-secondary);
             line-height: 1.75;
             font-size: 1.05rem;
             margin-bottom: 1rem;
         }
 
-        .policy-section ul {
+        .warranty-section ul {
             color: var(--text-secondary);
             line-height: 1.75;
             margin: 0 0 1rem 0;
@@ -177,13 +177,13 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
             list-style: none;
         }
 
-        .policy-section li {
+        .warranty-section li {
             margin-bottom: 0.5rem;
             padding-left: 1.5rem;
             position: relative;
         }
 
-        .policy-section li::before {
+        .warranty-section li::before {
             content: '•';
             position: absolute;
             left: 0;
@@ -191,65 +191,50 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
             font-weight: 600;
         }
 
-
         @media (max-width: 768px) {
-            .policy-hero {
+            .warranty-hero {
                 height: 300px;
             }
 
-            .policy-hero h1 {
+            .warranty-hero h1 {
                 font-size: 2rem;
             }
 
-            .policy-hero p {
+            .warranty-hero p {
                 font-size: 1rem;
             }
 
-            .policy-layout {
+            .warranty-layout {
                 grid-template-columns: 1fr;
                 gap: 2rem;
                 padding: 0 1rem;
             }
 
-            .policy-sidebar {
+            .warranty-sidebar {
                 position: static;
             }
 
-            .policy-sidebar nav {
+            .warranty-sidebar nav {
                 overflow-x: auto;
                 white-space: nowrap;
                 padding-bottom: 0.5rem;
             }
 
-            .policy-sidebar nav ul {
+            .warranty-sidebar nav ul {
                 display: flex;
                 gap: 1.5rem;
             }
 
-            .policy-sidebar nav li {
+            .warranty-sidebar nav li {
                 margin-bottom: 0;
             }
 
-            .policy-content {
+            .warranty-content {
                 padding: 2rem;
             }
 
-            .policy-content h2 {
+            .warranty-content h2 {
                 font-size: 1.5rem;
-            }
-
-            .policy-section {
-                padding: 1.5rem;
-                margin-bottom: 3rem;
-            }
-
-            .policy-section h2 {
-                font-size: 1.5rem;
-            }
-
-            .policy-section h2 svg {
-                width: 20px;
-                height: 20px;
             }
         }
     </style>
@@ -257,45 +242,70 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
 <body>
     <?php include PUBLIC_PATH . '/includes/header.php'; ?>
 
-    <main class="policy-page">
-        <div class="policy-hero">
-            <h1>Return & Refund Policy</h1>
-            <p>Our policy for returns, exchanges, and replacements.</p>
+    <main class="warranty-page">
+        <div class="warranty-hero">
+            <h1>Warranty Policy</h1>
+            <p>Our commitment to quality and your peace of mind.</p>
         </div>
 
-        <div class="policy-layout">
-            <aside class="policy-sidebar">
+        <div class="warranty-layout">
+            <aside class="warranty-sidebar">
                 <nav>
                     <div class="sidebar-label">NEED HELP?</div>
                     <ul>
                         <li><a href="<?= PUBLIC_URL ?>/shipping-info.php">Shipping Policy</a></li>
-                        <li><a href="<?= PUBLIC_URL ?>/warranty.php">Warranty</a></li>
+                        <li><a href="<?= PUBLIC_URL ?>/return-policy.php">Return Policy</a></li>
                         <li><a href="<?= PUBLIC_URL ?>/faq.php">FAQ</a></li>
                         <li><a href="<?= PUBLIC_URL ?>/contact.php">Contact Us</a></li>
                     </ul>
                 </nav>
             </aside>
 
-            <div class="policy-content">
-                <div class="policy-section standard">
-                    <h2>Returns & Exchanges</h2>
-                <p>Returns and exchanges are accepted within 14 days of delivery for the following reasons:</p>
-                <ul>
-                    <li>Damaged items received</li>
-                    <li>Incorrect sizing</li>
-                </ul>
-                <p>Please contact us immediately if you receive a damaged item or have sizing issues.</p>
-            </div>
+            <div class="warranty-content">
+                <div class="warranty-section">
+                    <p>Every Clicks Leather piece is handcrafted with care using 100% genuine leather — no shortcuts, no PU. We're confident in the quality of our craftsmanship, which is why every purchase comes with a one year warranty from your date of purchase, for your complete peace of mind.</p>
+                </div>
 
-            <div class="policy-section warning">
-                    <h2>Made-to-Order Items</h2>
-                <p>Since each piece is custom-made specifically for you, we cannot accept returns for change of mind once production has started. This ensures that every item meets our quality standards and is crafted to your specifications.</p>
-            </div>
+                <div class="warranty-section">
+                    <h2>What's Covered</h2>
+                    <p>We warrant that our materials and craftsmanship are free from manufacturing defects for 1 year from the date of purchase, for the original purchaser.</p>
+                </div>
 
-            <div class="policy-section positive">
-                    <h2>Fit Issues</h2>
-                <p>We offer a free replacement for fit issues. If your item doesn't fit properly, contact us and we'll arrange a replacement at no additional cost to you.</p>
-            </div>
+                <div class="warranty-section">
+                    <h2>What's NOT Covered</h2>
+                    <ul>
+                        <li>Damage from misuse or neglect</li>
+                        <li>Normal wear and tear</li>
+                        <li>Change of mind</li>
+                        <li>Overstuffing wallets/products beyond capacity</li>
+                        <li>Deformation from misuse</li>
+                        <li>Accidents</li>
+                        <li>Exposure to extreme conditions</li>
+                        <li>Color changes</li>
+                        <li>Acids, ink, oils, solvents</li>
+                        <li>Water</li>
+                        <li>Malicious damage</li>
+                    </ul>
+                    <p>Example: overstuffing a wallet beyond its recommended capacity will naturally stretch the leather and stress the stitching — this would not be covered under warranty.</p>
+                    <p>Incidental or consequential damages related to the product are not covered.</p>
+                </div>
+
+                <div class="warranty-section">
+                    <h2>Our Judgment</h2>
+                    <p>We reserve the right to inspect any returned item and make a fair judgment on whether the issue is covered under warranty. Depending on the case, we may offer a repair, an exchange for the same item (or the closest equivalent if unavailable), or a full refund. This warranty applies alongside your applicable consumer protection rights.</p>
+                </div>
+
+                <div class="warranty-section">
+                    <h2>Faulty Items</h2>
+                    <p>In the rare case your item arrives with a fault, please reach out to us (with photos, if possible) via our <a href="<?= PUBLIC_URL ?>/contact.php">Contact page</a>, and we'll guide you through the return process.</p>
+                    <p>We recommend using a tracked and insured shipping service when sending an item back — we can't be held responsible for items lost or damaged in transit. Please keep proof of postage.</p>
+                    <p>Once we receive and inspect the item, if it's confirmed faulty, we'll send a replacement or issue a refund (including shipping costs).</p>
+                </div>
+
+                <div class="warranty-section">
+                    <h2>How to Make a Claim</h2>
+                    <p>If your item develops a fault, please get in touch through our <a href="<?= PUBLIC_URL ?>/contact.php">Contact page</a> with photos and details — this helps us resolve things as quickly as possible.</p>
+                </div>
             </div>
         </div>
     </main>

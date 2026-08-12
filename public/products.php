@@ -118,11 +118,17 @@ function is_filter_selected($value, $selected_array) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Clicks Leather — <?= htmlspecialchars($category['naam']) ?> collection. Premium handcrafted leather goods.">
-    <title><?= htmlspecialchars($category['naam']) ?> — Clicks Leather</title>
+    <meta name="description" content="Clicks Leather — <?= $category ? htmlspecialchars($category['naam']) . ' collection' : 'Shop All' ?>. Premium handcrafted leather goods.">
+    <title><?= $category ? htmlspecialchars($category['naam']) : 'Shop All' ?> — Clicks Leather</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= PUBLIC_URL ?>/css/style.css">
+    <meta property="og:title" content="<?= $category ? htmlspecialchars($category['naam']) : 'Shop All' ?> — Clicks Leather">
+    <meta property="og:description" content="Clicks Leather — <?= $category ? htmlspecialchars($category['naam']) . ' collection' : 'Shop All' ?>. Premium handcrafted leather goods.">
+    <meta property="og:image" content="<?= PUBLIC_URL ?>/img/logo/clicks_leather_logo_dark_transparent.png">
+    <meta property="og:url" content="<?= PUBLIC_URL ?>/products.php<?= $category_slug ? '?category=' . htmlspecialchars($category_slug) : '' ?>">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
 </head>
 <body>
     <?php include PUBLIC_PATH . '/includes/header.php'; ?>

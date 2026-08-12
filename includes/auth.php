@@ -65,7 +65,7 @@ function register_user(PDO $pdo, string $naam, string $email, string $password, 
  * 
  * @return array ['success' => bool, 'message' => string, 'redirect' => string|null]
  */
-function login_user(PDO $pdo, string $email, string $password): array {
+function login_user(PDO $pdo, string $email, string $password, bool $force_customer_role = false): array {
     $email = sanitize_input($email);
 
     if (empty($email) || empty($password)) {
@@ -92,10 +92,21 @@ function login_user(PDO $pdo, string $email, string $password): array {
     }
 
     // Set session
-    set_user_session($user);
+    if ($force_customer_role) {
+        $customer_user = $user;
+        $customer_user['role'] = 'customer';
+        set_user_session($pdo, $customer_user);
+    } else {
+        set_user_session($pdo, $user);
+    }
 
-    // Role-based redirect
-    $redirect = ($user['role'] === 'admin') ? ADMIN_URL . '/dashboard.php' : PUBLIC_URL . '/index.php';
+    // Use safe redirect validation
+    $redirect = get_safe_redirect();
+
+    // Override with admin dashboard if admin (unless explicitly redirecting to checkout)
+    if (!$force_customer_role && $user['role'] === 'admin' && ($_GET['redirect'] ?? '') !== 'checkout') {
+        $redirect = ADMIN_URL . '/dashboard.php';
+    }
 
     return ['success' => true, 'message' => 'Login successful!', 'redirect' => $redirect];
 }
@@ -191,7 +202,7 @@ function handle_google_callback(PDO $pdo, string $auth_code): array {
     }
 
     // Set session
-    set_user_session($user);
+    set_user_session($pdo, $user);
 
     // Role-based redirect
     $redirect = ($user['role'] === 'admin') ? ADMIN_URL . '/dashboard.php' : PUBLIC_URL . '/index.php';
@@ -200,9 +211,121 @@ function handle_google_callback(PDO $pdo, string $auth_code): array {
 }
 
 /**
+ * Validate redirect URL to prevent open redirect attacks
+ * Only allows internal relative paths or specific whitelisted tokens
+ */
+function get_safe_redirect(): string {
+    $redirect = $_GET['redirect'] ?? null;
+    
+    // If no redirect, use default
+    if (!$redirect) {
+        return PUBLIC_URL . '/index.php';
+    }
+    
+    // Whitelist of allowed redirect tokens
+    $allowed_tokens = ['checkout', 'account'];
+    
+    // If it's a whitelisted token, convert to full URL
+    if (in_array($redirect, $allowed_tokens)) {
+        return PUBLIC_URL . '/' . $redirect . '.php';
+    }
+    
+    // If it's a relative path (no protocol, no //), validate it's within the site
+    if (!preg_match('/^(https?:|\/\/)/i', $redirect)) {
+        // Ensure it's a relative path starting with / or just a filename
+        if (strpos($redirect, '/') === 0 || !strpos($redirect, '/')) {
+            // Additional check: ensure no directory traversal
+            if (strpos($redirect, '..') === false) {
+                return PUBLIC_URL . '/' . ltrim($redirect, '/');
+            }
+        }
+    }
+    
+    // Default to safe redirect if validation fails
+    return PUBLIC_URL . '/index.php';
+}
+
+/**
+ * Merge guest cart items into user cart after login
+ */
+function merge_guest_cart(PDO $pdo, int $user_id, string $guest_session_id): void {
+    if (empty($guest_session_id)) {
+        return;
+    }
+    
+    // Get guest cart items
+    $stmt = $pdo->prepare("
+        SELECT product_id, variant_id, quantity, discounted_price, discount_percent, personalization_text
+        FROM cart_items
+        WHERE session_id = ? AND user_id IS NULL
+    ");
+    $stmt->execute([$guest_session_id]);
+    $guest_items = $stmt->fetchAll();
+    
+    if (empty($guest_items)) {
+        return;
+    }
+    
+    // Merge each guest item into user cart
+    foreach ($guest_items as $item) {
+        // Check if user already has this product/variant in cart
+        $check_stmt = $pdo->prepare("
+            SELECT id, quantity FROM cart_items
+            WHERE user_id = ? AND product_id = ? 
+            AND (variant_id = ? OR (variant_id IS NULL AND ? IS NULL))
+        ");
+        $check_stmt->execute([
+            $user_id,
+            $item['product_id'],
+            $item['variant_id'],
+            $item['variant_id']
+        ]);
+        $existing = $check_stmt->fetch();
+        
+        if ($existing) {
+            // Update quantity
+            $update_stmt = $pdo->prepare("
+                UPDATE cart_items 
+                SET quantity = quantity + ?, 
+                    discounted_price = ?, 
+                    discount_percent = ?
+                WHERE id = ?
+            ");
+            $update_stmt->execute([
+                $item['quantity'],
+                $item['discounted_price'],
+                $item['discount_percent'],
+                $existing['id']
+            ]);
+        } else {
+            // Insert new item with user_id
+            $insert_stmt = $pdo->prepare("
+                INSERT INTO cart_items (
+                    user_id, product_id, variant_id, quantity, 
+                    discounted_price, discount_percent, personalization_text
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            ");
+            $insert_stmt->execute([
+                $user_id,
+                $item['product_id'],
+                $item['variant_id'],
+                $item['quantity'],
+                $item['discounted_price'],
+                $item['discount_percent'],
+                $item['personalization_text']
+            ]);
+        }
+    }
+    
+    // Delete old guest cart items
+    $delete_stmt = $pdo->prepare("DELETE FROM cart_items WHERE session_id = ? AND user_id IS NULL");
+    $delete_stmt->execute([$guest_session_id]);
+}
+
+/**
  * Set user session data
  */
-function set_user_session(array $user): void {
+function set_user_session(PDO $pdo, array $user): void {
     // Regenerate session ID to prevent session fixation
     session_regenerate_id(true);
     
@@ -212,6 +335,12 @@ function set_user_session(array $user): void {
     $_SESSION['user_role'] = $user['role'];
     $_SESSION['logged_in'] = true;
     $_SESSION['last_activity'] = time();
+    
+    // Merge guest cart if exists
+    if (isset($_SESSION['guest_cart_session_id'])) {
+        merge_guest_cart($pdo, $user['id'], $_SESSION['guest_cart_session_id']);
+        unset($_SESSION['guest_cart_session_id']);
+    }
 }
 
 /**
