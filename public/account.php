@@ -10,8 +10,14 @@ require_login();
 
 // Get user info from session
 $user_id = $_SESSION['user_id'];
-$user_name = $_SESSION['user_name'] ?? '';
+$user_name = $_SESSION['user_naam'] ?? '';
 $user_email = $_SESSION['user_email'] ?? '';
+
+// Fetch google_id to determine if user signed in via Google
+$stmt = $pdo->prepare("SELECT google_id FROM users WHERE id = ?");
+$stmt->execute([$user_id]);
+$user_google_id = $stmt->fetchColumn();
+$is_google_user = !empty($user_google_id);
 
 // ============================================================
 // POST HANDLERS (Must be before any HTML output)
@@ -20,7 +26,7 @@ $user_email = $_SESSION['user_email'] ?? '';
 // Profile Update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_profile') {
     $new_name = sanitize_input($_POST['name'] ?? '');
-    $new_email = sanitize_input($_POST['email'] ?? '');
+    // Email is read-only and cannot be changed via this form
     
     $errors = [];
     
@@ -28,31 +34,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $errors[] = 'Name is required.';
     }
     
-    if (empty($new_email)) {
-        $errors[] = 'Email is required.';
-    } elseif (!filter_var($new_email, FILTER_VALIDATE_EMAIL)) {
-        $errors[] = 'Please enter a valid email address.';
-    }
-    
-    // Check if email is already taken by another user
-    if (empty($errors) && $new_email !== $user_email) {
-        $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ? AND id != ?");
-        $stmt->execute([$new_email, $user_id]);
-        if ($stmt->fetch()) {
-            $errors[] = 'This email is already in use by another account.';
-        }
-    }
-    
     if (empty($errors)) {
         try {
-            $stmt = $pdo->prepare("UPDATE users SET naam = ?, email = ? WHERE id = ?");
-            $stmt->execute([$new_name, $new_email, $user_id]);
+            $stmt = $pdo->prepare("UPDATE users SET naam = ? WHERE id = ?");
+            $stmt->execute([$new_name, $user_id]);
             
             // Update session
-            $_SESSION['user_name'] = $new_name;
-            $_SESSION['user_email'] = $new_email;
+            $_SESSION['user_naam'] = $new_name;
             $user_name = $new_name;
-            $user_email = $new_email;
             
             set_flash_message('success', 'Profile updated successfully.');
         } catch (Exception $e) {
@@ -67,6 +56,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
 // Password Change
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'change_password') {
+    // Block password changes for Google users
+    if ($is_google_user) {
+        set_flash_message('error', 'Password changes aren\'t available for accounts signed in with Google.');
+        redirect(PUBLIC_URL . '/account.php#profile');
+    }
+    
     $current_password = $_POST['current_password'] ?? '';
     $new_password = $_POST['new_password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
@@ -580,6 +575,22 @@ $addresses = $addresses_stmt->fetchAll(PDO::FETCH_ASSOC);
             border-color: var(--color-primary);
         }
 
+        .form-group input.input-readonly {
+            background-color: var(--bg-light);
+            color: var(--text-secondary);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .info-note {
+            background-color: var(--bg-light);
+            border-left: 3px solid var(--color-primary);
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
         .form-group.checkbox-group {
             display: flex;
             align-items: center;
@@ -726,73 +737,7 @@ $addresses = $addresses_stmt->fetchAll(PDO::FETCH_ASSOC);
     </style>
 </head>
 <body>
-    <!-- Sticky Header Container -->
-    <div class="header-container" id="site-header">
-        
-        <!-- Announcement Bar (Tier 1) -->
-        <div class="announcement-bar">
-            <span>60 DAY RETURNS</span>
-            <span class="separator">|</span>
-            <span>WORLDWIDE SHIPPING</span>
-            <span class="separator">|</span>
-            <span>1 YEAR WARRANTY</span>
-        </div>
-
-        <!-- Main Header (Tier 2) -->
-        <header class="main-header">
-            <div class="header-left">
-            </div>
-            
-            <div class="header-center">
-                <a href="<?= PUBLIC_URL ?>/index.php" class="header-logo-link">
-                    <img src="<?= PUBLIC_URL ?>/img/logo/clicks_leather_logo_dark_transparent.png" alt="Clicks Leather" class="header-logo-img">
-                </a>
-            </div>
-            
-            <div class="header-right">
-                <div class="header-icons">
-                    <a href="#" class="icon-link" title="Search">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    </a>
-                    
-                    <?php if (is_logged_in()): ?>
-                        <a href="<?= is_admin() ? ADMIN_URL . '/dashboard.php' : PUBLIC_URL . '/account.php' ?>" class="icon-link" title="Account">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                        </a>
-                    <?php else: ?>
-                        <a href="<?= PUBLIC_URL ?>/login.php" class="icon-link" title="Account">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                        </a>
-                    <?php endif; ?>
-                    
-                    <a href="#" class="icon-link" title="Help">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                    </a>
-                    
-                    <a href="#" class="icon-link cart-link" title="Bag">
-                        <div class="cart-icon-wrapper">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 01-8 0"></path></svg>
-                            <span class="cart-count">0</span>
-                        </div>
-                    </a>
-                </div>
-                <a href="#newsletter" class="btn btn-primary btn-sm subscribe-btn">SUBSCRIBE AND GET 10% OFF</a>
-            </div>
-        </header>
-
-        <!-- Navigation Bar (Tier 3) -->
-        <nav class="main-nav">
-            <ul class="nav-categories">
-                <li><a href="<?= PUBLIC_URL ?>/products.php?category=wallets">WALLETS</a></li>
-                <li><a href="<?= PUBLIC_URL ?>/products.php?category=ladies-bags">LADIES BAGS</a></li>
-                <li><a href="<?= PUBLIC_URL ?>/products.php?category=leather-jackets">LEATHER JACKETS</a></li>
-                <li><a href="<?= PUBLIC_URL ?>/products.php?category=laptop-bags">LAPTOP BAGS</a></li>
-                <li><a href="<?= PUBLIC_URL ?>/products.php?category=backpacks">BACKPACKS</a></li>
-                <li><a href="<?= PUBLIC_URL ?>/products.php?category=duffel-bags">DUFFEL BAGS</a></li>
-                <li><a href="<?= PUBLIC_URL ?>/products.php?category=leather-shoes">LEATHER SHOES</a></li>
-            </ul>
-        </nav>
-    </div>
+    <?php include PUBLIC_PATH . '/includes/header.php'; ?>
 
     <?= display_flash_message() ?>
 
@@ -901,8 +846,8 @@ $addresses = $addresses_stmt->fetchAll(PDO::FETCH_ASSOC);
                                 </div>
                                 <div class="form-group">
                                     <label for="email">Email</label>
-                                    <input type="email" id="email" name="email" 
-                                           value="<?= htmlspecialchars($user_email) ?>" required>
+                                    <input type="email" id="email" name="email" class="input-readonly"
+                                           value="<?= htmlspecialchars($user_email) ?>" readonly>
                                 </div>
                                 <button type="submit" class="btn btn-primary">Update Profile</button>
                             </form>
@@ -911,13 +856,16 @@ $addresses = $addresses_stmt->fetchAll(PDO::FETCH_ASSOC);
                         <!-- Change Password -->
                         <div class="profile-form-container" style="margin-top: 2rem;">
                             <h3>Change Password</h3>
+                            <?php if ($is_google_user): ?>
+                                <p class="info-note">Password changes aren't available for accounts signed in with Google.</p>
+                            <?php endif; ?>
                             <form method="POST" action="<?= PUBLIC_URL ?>/account.php#profile">
                                 <input type="hidden" name="action" value="change_password">
                                 <div class="form-group">
                                     <label for="current_password">Current Password</label>
                                     <div class="password-input-wrapper">
-                                        <input type="password" id="current_password" name="current_password" required>
-                                        <button type="button" class="password-toggle-icon" aria-label="Show password">
+                                        <input type="password" id="current_password" name="current_password" required <?= $is_google_user ? 'disabled' : '' ?>>
+                                        <button type="button" class="password-toggle-icon" aria-label="Show password" <?= $is_google_user ? 'disabled' : '' ?>>
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                                 <circle cx="12" cy="12" r="3"></circle>
@@ -928,8 +876,8 @@ $addresses = $addresses_stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <div class="form-group">
                                     <label for="new_password">New Password</label>
                                     <div class="password-input-wrapper">
-                                        <input type="password" id="new_password" name="new_password" required minlength="6">
-                                        <button type="button" class="password-toggle-icon" aria-label="Show password">
+                                        <input type="password" id="new_password" name="new_password" required minlength="6" <?= $is_google_user ? 'disabled' : '' ?>>
+                                        <button type="button" class="password-toggle-icon" aria-label="Show password" <?= $is_google_user ? 'disabled' : '' ?>>
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                                 <circle cx="12" cy="12" r="3"></circle>
@@ -940,8 +888,8 @@ $addresses = $addresses_stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <div class="form-group">
                                     <label for="confirm_password">Confirm New Password</label>
                                     <div class="password-input-wrapper">
-                                        <input type="password" id="confirm_password" name="confirm_password" required minlength="6">
-                                        <button type="button" class="password-toggle-icon" aria-label="Show password">
+                                        <input type="password" id="confirm_password" name="confirm_password" required minlength="6" <?= $is_google_user ? 'disabled' : '' ?>>
+                                        <button type="button" class="password-toggle-icon" aria-label="Show password" <?= $is_google_user ? 'disabled' : '' ?>>
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                                 <circle cx="12" cy="12" r="3"></circle>
@@ -949,7 +897,7 @@ $addresses = $addresses_stmt->fetchAll(PDO::FETCH_ASSOC);
                                         </button>
                                     </div>
                                 </div>
-                                <button type="submit" class="btn btn-primary">Change Password</button>
+                                <button type="submit" class="btn btn-primary" <?= $is_google_user ? 'disabled' : '' ?>>Change Password</button>
                             </form>
                         </div>
                     </div>
@@ -1059,55 +1007,7 @@ $addresses = $addresses_stmt->fetchAll(PDO::FETCH_ASSOC);
     <!-- Cart Drawer -->
     <?php include PUBLIC_PATH . '/includes/cart-drawer.php'; ?>
 
-    <!-- Cart JavaScript -->
-    <script src="<?= PUBLIC_URL ?>/js/cart.js"></script>
-
-    <!-- Footer -->
-    <footer class="site-footer">
-        <div class="footer-grid">
-            <div class="footer-col">
-                <a href="<?= PUBLIC_URL ?>/index.php" class="footer-logo-link">
-                    <img src="<?= PUBLIC_URL ?>/img/logo/clicks_leather_logo_dark_transparent.png" alt="Clicks Leather" class="footer-logo-img">
-                </a>
-                <p>Premium handcrafted leather goods.</p>
-            </div>
-            <div class="footer-col">
-                <h4>Shop</h4>
-                <ul>
-                    <li><a href="<?= PUBLIC_URL ?>/products.php?category=wallets">Wallets</a></li>
-                    <li><a href="<?= PUBLIC_URL ?>/products.php?category=ladies-bags">Bags</a></li>
-                    <li><a href="#">Accessories</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h4>Company</h4>
-                <ul>
-                    <li><a href="#">About Us</a></li>
-                    <li><a href="#">Contact</a></li>
-                    <li><a href="#">Journal</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h4>Support</h4>
-                <ul>
-                    <li><a href="#">FAQ</a></li>
-                    <li><a href="#">Shipping & Returns</a></li>
-                    <li><a href="#">Warranty</a></li>
-                </ul>
-            </div>
-            <div class="footer-col newsletter-col">
-                <h4>Newsletter</h4>
-                <p>Join our list for 10% off your first order.</p>
-                <form class="newsletter-form">
-                    <input type="email" placeholder="Your email address" required>
-                    <button type="submit" class="btn btn-primary btn-sm">Subscribe</button>
-                </form>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; <?= date('Y') ?> Clicks Leather. All rights reserved. Handcrafted with ❤️</p>
-        </div>
-    </footer>
+    <?php include PUBLIC_PATH . '/includes/footer.php'; ?>
 
     <script>
         // Account Navigation Tab Switching
@@ -1217,63 +1117,6 @@ $addresses = $addresses_stmt->fetchAll(PDO::FETCH_ASSOC);
                     target.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
             });
-        });
-
-        // Multi-Stage Header Scroll Effect with Hysteresis
-        let isTicking = false;
-        let currentStage = 1;
-
-        window.addEventListener('scroll', function() {
-            if (!isTicking) {
-                window.requestAnimationFrame(function() {
-                    const header = document.getElementById('site-header');
-                    const currentScrollY = window.scrollY;
-                    
-                    const stage2Activate = 40;
-                    const stage2Deactivate = 20;
-                    const stage3Activate = 160;
-                    const stage3Deactivate = 140;
-                    
-                    if (currentStage === 1 && currentScrollY < stage2Activate) {
-                        header.style.boxShadow = 'none';
-                        header.classList.remove('stage-2', 'stage-3');
-                    }
-                    else if (currentStage === 1 && currentScrollY >= stage2Activate) {
-                        header.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)';
-                        header.classList.add('stage-2');
-                        header.classList.remove('stage-3');
-                        currentStage = 2;
-                    }
-                    else if (currentStage === 2 && currentScrollY >= stage2Deactivate && currentScrollY < stage3Activate) {
-                        header.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)';
-                        header.classList.add('stage-2');
-                        header.classList.remove('stage-3');
-                    }
-                    else if (currentStage === 2 && currentScrollY < stage2Deactivate) {
-                        header.style.boxShadow = 'none';
-                        header.classList.remove('stage-2', 'stage-3');
-                        currentStage = 1;
-                    }
-                    else if ((currentStage === 2 || currentStage === 1) && currentScrollY >= stage3Activate) {
-                        header.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)';
-                        header.classList.add('stage-2', 'stage-3');
-                        currentStage = 3;
-                    }
-                    else if (currentStage === 3 && currentScrollY >= stage3Deactivate) {
-                        header.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)';
-                        header.classList.add('stage-2', 'stage-3');
-                    }
-                    else if (currentStage === 3 && currentScrollY < stage3Deactivate) {
-                        header.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)';
-                        header.classList.add('stage-2');
-                        header.classList.remove('stage-3');
-                        currentStage = 2;
-                    }
-                    
-                    isTicking = false;
-                });
-                isTicking = true;
-            }
         });
     </script>
 

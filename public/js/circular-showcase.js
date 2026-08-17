@@ -36,8 +36,9 @@
         }
 
         if (currentScroll >= maxScroll - 10) {
-            // At end - loop back to start
-            smoothScrollTo(showcase, 0, 300);
+            // At end - instant jump to start (no animation)
+            showcase.scrollLeft = 0;
+            updateProgressBar(0, maxScroll);
         } else {
             // Scroll forward by one circle
             const target = Math.min(currentScroll + perCircleScroll, maxScroll);

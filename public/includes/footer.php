@@ -67,3 +67,6 @@
         <p>&copy; <?= date('Y') ?> Clicks Leather. All rights reserved.</p>
     </div>
 </footer>
+
+<!-- Chatbot Widget -->
+<?php include PUBLIC_PATH . '/includes/chatbot.php'; ?>
