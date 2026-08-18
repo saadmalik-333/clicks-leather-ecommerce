@@ -92,6 +92,34 @@ require_active_session();
     </nav>
 </div>
 
+<!-- Hamburger Button (visible below 968px) -->
+<button class="hamburger-btn" id="hamburgerBtn" aria-label="Open menu">
+    <span></span>
+    <span></span>
+    <span></span>
+</button>
+
+<!-- Mobile Menu Overlay (fixed, direct body child) -->
+<div class="mobile-menu" id="mobileMenu">
+    <div class="mobile-menu-backdrop" id="mobileMenuBackdrop"></div>
+    <div class="mobile-menu-content">
+        <button class="mobile-menu-close" id="mobileMenuClose" aria-label="Close menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+        <nav class="mobile-nav">
+            <ul class="mobile-nav-categories">
+                <li><a href="<?= PUBLIC_URL ?>/products.php?category=wallets">Wallets</a></li>
+                <li><a href="<?= PUBLIC_URL ?>/products.php?category=ladies-bags">Ladies Bags</a></li>
+                <li><a href="<?= PUBLIC_URL ?>/products.php?category=leather-jackets">Leather Jackets</a></li>
+                <li><a href="<?= PUBLIC_URL ?>/products.php?category=laptop-bags">Laptop Bags</a></li>
+                <li><a href="<?= PUBLIC_URL ?>/products.php?category=backpacks">Backpacks</a></li>
+                <li><a href="<?= PUBLIC_URL ?>/products.php?category=duffel-bags">Duffel Bags</a></li>
+                <li><a href="<?= PUBLIC_URL ?>/products.php?category=leather-shoes">Leather Shoes</a></li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
 <!-- Flash Messages -->
 <div style="position:fixed; top:80px; right:20px; z-index:1001; max-width:400px;">
     <?= display_flash_message() ?>
@@ -101,3 +129,6 @@ require_active_session();
 
 <!-- Search Script -->
 <script src="<?= PUBLIC_URL ?>/js/search.js"></script>
+
+<!-- Mobile Menu Script -->
+<script src="<?= PUBLIC_URL ?>/js/mobile-menu.js"></script>
