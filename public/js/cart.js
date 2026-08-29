@@ -13,6 +13,7 @@
     function openCartDrawer() {
         cartDrawer.classList.add('active');
         cartDrawerOverlay.classList.add('active');
+        document.body.classList.add('cart-open');
         document.body.style.overflow = 'hidden';
         loadCart();
     }
@@ -21,6 +22,7 @@
     function closeCartDrawer() {
         cartDrawer.classList.remove('active');
         cartDrawerOverlay.classList.remove('active');
+        document.body.classList.remove('cart-open');
         document.body.style.overflow = '';
     }
 

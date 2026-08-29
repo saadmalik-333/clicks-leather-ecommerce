@@ -191,7 +191,124 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
             font-weight: 600;
         }
 
-        @media (max-width: 768px) {
+        /* Shipping accordion base styles */
+        .shipping-timeline {
+            margin-bottom: 4rem;
+            position: relative;
+        }
+
+        .timeline-wrapper {
+            position: relative;
+            padding-left: 3rem;
+        }
+
+        .timeline-wrapper::before {
+            content: '';
+            position: absolute;
+            left: 0.75rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--color-primary-light);
+        }
+
+        .timeline-step {
+            position: relative;
+            margin-bottom: 2.5rem;
+        }
+
+        .timeline-step:last-child {
+            margin-bottom: 0;
+        }
+
+        .timeline-number {
+            position: absolute;
+            left: -3rem;
+            width: 40px;
+            height: 40px;
+            background: var(--color-primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            z-index: 1;
+        }
+
+        .timeline-content h3 {
+            font-size: 1.15rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .timeline-content p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .shipping-note {
+            margin-bottom: 3rem;
+        }
+
+        .shipping-note h3 {
+            font-family: var(--font-display);
+            font-size: 1.6rem;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+        }
+
+        .shipping-note p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* Return Policy accordion base styles */
+        .policy-section {
+            margin-bottom: 3rem;
+        }
+
+        .policy-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .policy-section p {
+            color: var(--text-secondary);
+            line-height: 1.75;
+            font-size: 1.05rem;
+            margin-bottom: 1rem;
+        }
+
+        .policy-section ul {
+            color: var(--text-secondary);
+            line-height: 1.75;
+            margin: 0 0 1rem 0;
+            padding-left: 0;
+            list-style: none;
+        }
+
+        .policy-section li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .policy-section li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: var(--color-primary);
+            font-weight: 600;
+        }
+
+        @media (max-width: 767px) {
             .warranty-hero {
                 height: 300px;
             }
@@ -212,6 +329,7 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
 
             .warranty-sidebar {
                 position: static;
+                min-width: 0;
             }
 
             .warranty-sidebar nav {
@@ -230,17 +348,211 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
             }
 
             .warranty-content {
+                padding: 1.5rem;
+            }
+
+            /* Additional mobile responsive fixes */
+            .warranty-section h2 {
+                font-size: 1.25rem;
+                margin-bottom: 1rem;
+            }
+
+            .warranty-section {
+                margin-bottom: 1.5rem;
+            }
+
+            .warranty-section p {
+                font-size: 1rem;
+            }
+
+            /* Shipping accordion */
+            .shipping-timeline h2,
+            .shipping-note h3 {
+                font-size: 1.25rem;
+                margin-bottom: 1rem;
+            }
+
+            .shipping-timeline,
+            .shipping-note {
+                margin-bottom: 1.5rem;
+            }
+
+            /* Return Policy accordion */
+            .policy-section h2 {
+                font-size: 1.25rem;
+                margin-bottom: 1rem;
+            }
+
+            .policy-section {
+                margin-bottom: 1.5rem;
+            }
+        }
+
+        /* Desktop: show 2-column layout, hide unified accordion */
+        @media (min-width: 1025px) {
+            .warranty-layout {
+                display: grid;
+                grid-template-columns: 250px 1fr;
+                gap: 0;
+                max-width: 1100px;
+                margin: 0 auto 4rem;
+                padding: 0 2rem;
+            }
+
+            .warranty-sidebar {
+                display: block;
+            }
+
+            .warranty-content {
+                display: block;
+            }
+
+            .unified-accordion-list {
+                display: none;
+            }
+        }
+
+        /* Tablet/Mobile: hide 2-column layout, show unified accordion */
+        @media (max-width: 1024px) {
+            .warranty-layout {
+                display: none;
+            }
+
+            .unified-accordion-list {
+                display: block;
+                max-width: 1100px;
+                margin: 0 auto 4rem;
+                padding: 0 2rem;
+            }
+
+            .sidebar-label {
+                font-size: 0.9rem;
+                font-weight: 500;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+                color: var(--text-secondary);
+                margin-bottom: 1rem;
+            }
+
+            .sidebar-accordion-item {
+                background: var(--bg-card-hover);
+                border-radius: var(--radius-sm);
+                margin-bottom: 1rem;
+                overflow: hidden;
+            }
+
+            .sidebar-accordion-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                cursor: pointer;
+                padding: 1rem;
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            .sidebar-accordion-header span:first-child {
+                font-size: 1.1rem;
+                font-weight: 500;
+                color: var(--text-primary);
+            }
+
+            .sidebar-accordion-header .accordion-icon {
+                font-size: 1.5rem;
+                font-weight: 300;
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar-accordion-header.link-only a {
+                flex: 1;
+                color: var(--text-primary);
+                text-decoration: none;
+                font-size: 1.1rem;
+                font-weight: 500;
+            }
+
+            .sidebar-accordion-body {
+                display: none;
+                padding: 1rem;
+            }
+
+            .sidebar-accordion-body.active {
+                display: block;
+            }
+
+            .sidebar-accordion-header.active .accordion-icon {
+                transform: rotate(45deg);
+            }
+
+            /* Content container padding */
+            .sidebar-accordion-body {
                 padding: 2rem;
             }
 
-            .warranty-content h2 {
-                font-size: 1.5rem;
+            /* Heading font-sizes */
+            .warranty-section h2 {
+                font-size: 1.4rem;
+                margin-bottom: 1.5rem;
+            }
+
+            /* Section spacing */
+            .warranty-section {
+                margin-bottom: 2rem;
+            }
+
+            /* Paragraph font-size */
+            .warranty-section p {
+                font-size: 1rem;
+            }
+
+            /* Shipping accordion */
+            .shipping-timeline h2,
+            .shipping-note h3 {
+                font-size: 1.4rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .shipping-timeline,
+            .shipping-note {
+                margin-bottom: 2rem;
+            }
+
+            .timeline-step {
+                margin-bottom: 2rem;
+            }
+
+            .timeline-number {
+                width: 36px;
+                height: 36px;
+                font-size: 1rem;
+            }
+
+            .timeline-content h3 {
+                font-size: 1.05rem;
+            }
+
+            .timeline-content p {
+                font-size: 1rem;
+            }
+
+            /* Return Policy accordion */
+            .policy-section h2 {
+                font-size: 1.4rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .policy-section {
+                margin-bottom: 2rem;
+            }
+
+            .policy-section p {
+                font-size: 1rem;
             }
         }
     </style>
 </head>
 <body>
     <?php include PUBLIC_PATH . '/includes/header.php'; ?>
+    <div class="page-wrapper">
 
     <main class="warranty-page">
         <div class="warranty-hero">
@@ -262,49 +574,65 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
             </aside>
 
             <div class="warranty-content">
-                <div class="warranty-section">
-                    <p>Every Clicks Leather piece is handcrafted with care using 100% genuine leather — no shortcuts, no PU. We're confident in the quality of our craftsmanship, which is why every purchase comes with a one year warranty from your date of purchase, for your complete peace of mind.</p>
-                </div>
+                <?php include INCLUDES_PATH . '/warranty-content.php'; ?>
+            </div>
+        </div>
 
-                <div class="warranty-section">
-                    <h2>What's Covered</h2>
-                    <p>We warrant that our materials and craftsmanship are free from manufacturing defects for 1 year from the date of purchase, for the original purchaser.</p>
+        <!-- Tablet/Mobile-only: unified accordion list -->
+        <div class="unified-accordion-list">
+            <div class="sidebar-label">NEED HELP?</div>
+            
+            <!-- Shipping Policy (expandable) -->
+            <div class="sidebar-accordion-item">
+                <div class="sidebar-accordion-header" data-target="shipping-content">
+                    <span>Shipping Policy</span>
+                    <span class="accordion-icon">+</span>
                 </div>
-
-                <div class="warranty-section">
-                    <h2>What's NOT Covered</h2>
-                    <ul>
-                        <li>Damage from misuse or neglect</li>
-                        <li>Normal wear and tear</li>
-                        <li>Change of mind</li>
-                        <li>Overstuffing wallets/products beyond capacity</li>
-                        <li>Deformation from misuse</li>
-                        <li>Accidents</li>
-                        <li>Exposure to extreme conditions</li>
-                        <li>Color changes</li>
-                        <li>Acids, ink, oils, solvents</li>
-                        <li>Water</li>
-                        <li>Malicious damage</li>
-                    </ul>
-                    <p>Example: overstuffing a wallet beyond its recommended capacity will naturally stretch the leather and stress the stitching — this would not be covered under warranty.</p>
-                    <p>Incidental or consequential damages related to the product are not covered.</p>
+                <div class="sidebar-accordion-body" id="shipping-content">
+                    <?php 
+                    // Include shipping variables for the partial
+                    $shipping_is_free = get_setting($pdo, 'shipping_is_free', 'yes');
+                    $shipping_flat_cost = floatval(get_setting($pdo, 'shipping_flat_cost', '15.00'));
+                    include INCLUDES_PATH . '/shipping-content.php'; 
+                    ?>
                 </div>
+            </div>
 
-                <div class="warranty-section">
-                    <h2>Our Judgment</h2>
-                    <p>We reserve the right to inspect any returned item and make a fair judgment on whether the issue is covered under warranty. Depending on the case, we may offer a repair, an exchange for the same item (or the closest equivalent if unavailable), or a full refund. This warranty applies alongside your applicable consumer protection rights.</p>
+            <!-- Return Policy (expandable) -->
+            <div class="sidebar-accordion-item">
+                <div class="sidebar-accordion-header" data-target="return-content">
+                    <span>Return Policy</span>
+                    <span class="accordion-icon">+</span>
                 </div>
-
-                <div class="warranty-section">
-                    <h2>Faulty Items</h2>
-                    <p>In the rare case your item arrives with a fault, please reach out to us (with photos, if possible) via our <a href="<?= PUBLIC_URL ?>/contact.php">Contact page</a>, and we'll guide you through the return process.</p>
-                    <p>We recommend using a tracked and insured shipping service when sending an item back — we can't be held responsible for items lost or damaged in transit. Please keep proof of postage.</p>
-                    <p>Once we receive and inspect the item, if it's confirmed faulty, we'll send a replacement or issue a refund (including shipping costs).</p>
+                <div class="sidebar-accordion-body" id="return-content">
+                    <?php include INCLUDES_PATH . '/return-policy-content.php'; ?>
                 </div>
+            </div>
 
-                <div class="warranty-section">
-                    <h2>How to Make a Claim</h2>
-                    <p>If your item develops a fault, please get in touch through our <a href="<?= PUBLIC_URL ?>/contact.php">Contact page</a> with photos and details — this helps us resolve things as quickly as possible.</p>
+            <!-- Warranty Policy (expandable) -->
+            <div class="sidebar-accordion-item">
+                <div class="sidebar-accordion-header" data-target="warranty-content">
+                    <span>Warranty Policy</span>
+                    <span class="accordion-icon">+</span>
+                </div>
+                <div class="sidebar-accordion-body" id="warranty-content">
+                    <?php include INCLUDES_PATH . '/warranty-content.php'; ?>
+                </div>
+            </div>
+
+            <!-- FAQ (plain link) -->
+            <div class="sidebar-accordion-item">
+                <div class="sidebar-accordion-header link-only">
+                    <a href="<?= PUBLIC_URL ?>/faq.php">FAQ</a>
+                    <span class="accordion-icon">+</span>
+                </div>
+            </div>
+
+            <!-- Contact Us (plain link) -->
+            <div class="sidebar-accordion-item">
+                <div class="sidebar-accordion-header link-only">
+                    <a href="<?= PUBLIC_URL ?>/contact.php">Contact Us</a>
+                    <span class="accordion-icon">+</span>
                 </div>
             </div>
         </div>
@@ -318,5 +646,31 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
     <!-- Cart JavaScript -->
     <script src="<?= PUBLIC_URL ?>/js/cart.js"></script>
     <script src="<?= PUBLIC_URL ?>/js/header-scroll.js"></script>
+
+    <!-- Unified Accordion JavaScript -->
+    <script>
+        (function() {
+            const accordionHeaders = document.querySelectorAll('.sidebar-accordion-header');
+            
+            accordionHeaders.forEach(header => {
+                header.addEventListener('click', function(e) {
+                    // If it's a link-only row (FAQ/Contact), let the link navigate normally
+                    if (this.classList.contains('link-only')) {
+                        return;
+                    }
+                    
+                    // For expandable rows (Shipping/Return/Warranty), toggle accordion
+                    const targetId = this.getAttribute('data-target');
+                    const body = document.getElementById(targetId);
+                    
+                    if (body) {
+                        body.classList.toggle('active');
+                        this.classList.toggle('active');
+                    }
+                });
+            });
+        })();
+    </script>
+    </div>
 </body>
 </html>

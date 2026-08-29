@@ -201,6 +201,7 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
 </head>
 <body>
     <?php include PUBLIC_PATH . '/includes/header.php'; ?>
+    <div class="page-wrapper">
 
     <main class="about-page">
         <!-- Hero Section -->
@@ -252,5 +253,6 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
     <!-- Cart JavaScript -->
     <script src="<?= PUBLIC_URL ?>/js/cart.js"></script>
     <script src="<?= PUBLIC_URL ?>/js/header-scroll.js"></script>
+    </div>
 </body>
 </html>

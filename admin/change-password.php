@@ -187,7 +187,7 @@ require_once __DIR__ . '/includes/header.php';
         height: 20px;
     }
     
-    .btn {
+    .form-card .btn {
         padding: 0.75rem 1.5rem;
         border: none;
         border-radius: var(--radius-sm);

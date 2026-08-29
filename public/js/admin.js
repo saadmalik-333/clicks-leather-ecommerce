@@ -12,7 +12,23 @@ document.addEventListener('DOMContentLoaded', function () {
     const adminMain = document.getElementById('admin-main');
 
     if (mobileToggle && sidebar) {
-        mobileToggle.addEventListener('click', function () {
+        let touchHandled = false;
+
+        mobileToggle.addEventListener('touchstart', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            touchHandled = true;
+            sidebar.classList.toggle('open');
+        });
+
+        mobileToggle.addEventListener('click', function (e) {
+            if (touchHandled) {
+                touchHandled = false;
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+            }
+            e.stopPropagation();
             sidebar.classList.toggle('open');
         });
 

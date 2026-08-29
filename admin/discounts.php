@@ -160,7 +160,7 @@ require_once __DIR__ . '/includes/header.php';
             </div>
             
             <div class="form-group" id="category-field" style="display: <?= $edit_discount && $edit_discount['type'] === 'category' ? 'block' : 'none' ?>;">
-                <label for="category_id">Category</label>
+                <label for="category-select">Category</label>
                 <select name="category_id" id="category-select">
                     <option value="">Select a category</option>
                     <?php foreach ($categories as $cat): ?>
@@ -172,7 +172,7 @@ require_once __DIR__ . '/includes/header.php';
             </div>
             
             <div class="form-group" id="product-field" style="display: <?= $edit_discount && $edit_discount['type'] === 'product' ? 'block' : 'none' ?>;">
-                <label for="product_id">Product</label>
+                <label for="product-select">Product</label>
                 <select name="product_id" id="product-select">
                     <option value="">Select a product</option>
                     <?php foreach ($products as $prod): ?>
@@ -220,7 +220,7 @@ require_once __DIR__ . '/includes/header.php';
         </div>
     <?php else: ?>
         <div class="table-responsive">
-            <table class="data-table">
+            <table class="data-table" id="discounts-table">
                 <thead>
                     <tr>
                         <th>Type</th>

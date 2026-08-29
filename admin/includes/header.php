@@ -16,12 +16,12 @@ $current_page = basename($_SERVER['PHP_SELF']);
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title><?= $page_title ?? 'Admin Panel' ?> — Clicks Leather Admin</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= PUBLIC_URL ?>/css/style.css">
-    <link rel="stylesheet" href="<?= PUBLIC_URL ?>/css/admin.css">
+    <link rel="stylesheet" href="<?= PUBLIC_URL ?>/css/admin.css?v=<?= time() ?>">
 </head>
 <body class="admin-body">
     <!-- Sidebar -->

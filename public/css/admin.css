@@ -7,6 +7,7 @@
     display: flex;
     min-height: 100vh;
     background: var(--bg-dark);
+    overflow-x: hidden;
 }
 
 /* ---------- Sidebar ---------- */
@@ -197,6 +198,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
     padding: var(--space-md) var(--space-xl);
     background: rgba(253, 251, 247, 0.95);
     backdrop-filter: blur(16px);
@@ -441,7 +443,12 @@
 
 /* Action Buttons in Table */
 .actions-cell {
+    /* td stays as table-cell so vertical-align: middle works */
+}
+
+.actions-wrapper {
     display: flex;
+    align-items: center;
     gap: var(--space-sm);
 }
 
@@ -780,7 +787,7 @@
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1245px) {
     .admin-sidebar {
         transform: translateX(-100%);
     }
@@ -791,12 +798,20 @@
 
     .admin-main {
         margin-left: 0;
+        min-width: 0;
     }
 
     .mobile-toggle {
         display: block;
     }
 
+    .admin-topbar {
+        padding: var(--space-md) var(--space-lg);
+        min-width: 0;
+    }
+}
+
+@media (max-width: 768px) {
     .stats-grid {
         grid-template-columns: 1fr;
     }
@@ -816,6 +831,61 @@
 
     .admin-content {
         padding: var(--space-md);
+    }
+
+    /* Mobile table optimization */
+    .data-table {
+        font-size: 0.8rem;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 0.5rem 0.5rem;
+    }
+
+    /* Dashboard table: hide Status (4th) and Date (5th) columns */
+    #recent-orders-table th:nth-child(4),
+    #recent-orders-table td:nth-child(4),
+    #recent-orders-table th:nth-child(5),
+    #recent-orders-table td:nth-child(5) {
+        display: none;
+    }
+
+    /* Orders table: hide Email (3rd), Phone (4th), Date (7th), Amount (5th) columns */
+    #orders-table th:nth-child(3),
+    #orders-table td:nth-child(3),
+    #orders-table th:nth-child(4),
+    #orders-table td:nth-child(4),
+    #orders-table th:nth-child(5),
+    #orders-table td:nth-child(5),
+    #orders-table th:nth-child(7),
+    #orders-table td:nth-child(7) {
+        display: none;
+    }
+
+    /* Order Items table: hide Engraving (5th) column */
+    #order-items-table th:nth-child(5),
+    #order-items-table td:nth-child(5) {
+        display: none;
+    }
+
+    /* Discounts table: hide Date Range (4th) column */
+    #discounts-table th:nth-child(4),
+    #discounts-table td:nth-child(4) {
+        display: none;
+    }
+
+    /* Order Detail: single column layout on mobile */
+    .order-detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .detail-row {
+        flex-direction: column;
+    }
+
+    .detail-value {
+        text-align: left;
     }
 }
 

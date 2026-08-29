@@ -11,27 +11,36 @@
             <a href="<?= PUBLIC_URL ?>/index.php" class="footer-logo-link">
                 <img src="<?= PUBLIC_URL ?>/img/logo/clicks_leather_logo_dark_transparent.png" alt="Clicks Leather" class="footer-logo-img">
             </a>
+            <p class="footer-mobile-tagline">Handcrafted leather, lasts a lifetime.</p>
         </div>
-        <div class="footer-col">
-            <h4>Shop</h4>
-            <ul>
+        <div class="footer-col footer-accordion">
+            <div class="accordion-header">
+                <h4>Collections</h4>
+                <span class="accordion-icon">+</span>
+            </div>
+            <ul class="accordion-content">
                 <li><a href="<?= PUBLIC_URL ?>/products.php?category=wallets">Wallets</a></li>
                 <li><a href="<?= PUBLIC_URL ?>/products.php?category=leather-jackets">Leather Jackets</a></li>
                 <li><a href="<?= PUBLIC_URL ?>/products.php?category=laptop-bags">Laptop Bags</a></li>
             </ul>
         </div>
-        <div class="footer-col">
-            <h4>Company</h4>
-            <ul>
+        <div class="footer-col footer-accordion">
+            <div class="accordion-header">
+                <h4>Company</h4>
+                <span class="accordion-icon">+</span>
+            </div>
+            <ul class="accordion-content">
                 <li><a href="<?= PUBLIC_URL ?>/about.php">About Us</a></li>
                 <li><a href="<?= PUBLIC_URL ?>/contact.php">Contact</a></li>
                 <li><a href="<?= PUBLIC_URL ?>/faq.php">FAQ</a></li>
             </ul>
         </div>
-        <div class="footer-col">
-            <h4>Support</h4>
-            <ul>
-                
+        <div class="footer-col footer-accordion">
+            <div class="accordion-header">
+                <h4>Support</h4>
+                <span class="accordion-icon">+</span>
+            </div>
+            <ul class="accordion-content">
                 <li><a href="<?= PUBLIC_URL ?>/shipping-info.php">Shipping Info</a></li>
                 <li><a href="<?= PUBLIC_URL ?>/return-policy.php">Return Policy</a></li>
                 <li><a href="<?= PUBLIC_URL ?>/warranty.php">Warranty</a></li>
@@ -70,3 +79,5 @@
 
 <!-- Chatbot Widget -->
 <?php include PUBLIC_PATH . '/includes/chatbot.php'; ?>
+
+<script src="<?= PUBLIC_URL ?>/js/footer-accordion.js"></script>

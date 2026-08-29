@@ -52,7 +52,7 @@ require_active_session();
                     </a>
                 <?php endif; ?>
                 
-                <a href="<?= PUBLIC_URL ?>/faq.php" class="icon-link" title="Help">
+                <a href="<?= PUBLIC_URL ?>/faq.php" class="icon-link faq-icon-link" title="Help">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
                 </a>
                 
@@ -94,9 +94,11 @@ require_active_session();
 
 <!-- Hamburger Button (visible below 968px) -->
 <button class="hamburger-btn" id="hamburgerBtn" aria-label="Open menu">
-    <span></span>
-    <span></span>
-    <span></span>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
 </button>
 
 <!-- Mobile Menu Overlay (fixed, direct body child) -->
@@ -115,6 +117,8 @@ require_active_session();
                 <li><a href="<?= PUBLIC_URL ?>/products.php?category=backpacks">Backpacks</a></li>
                 <li><a href="<?= PUBLIC_URL ?>/products.php?category=duffel-bags">Duffel Bags</a></li>
                 <li><a href="<?= PUBLIC_URL ?>/products.php?category=leather-shoes">Leather Shoes</a></li>
+                <li><a href="<?= PUBLIC_URL ?>/faq.php">FAQ</a></li>
+                <li><a href="<?= PUBLIC_URL ?>/contact.php">Contact Us</a></li>
             </ul>
         </nav>
     </div>

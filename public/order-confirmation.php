@@ -267,6 +267,7 @@ $total_items = array_sum(array_column($order_items, 'quantity'));
 </head>
 <body>
     <?php include PUBLIC_PATH . '/includes/header.php'; ?>
+    <div class="page-wrapper">
 
     <div class="confirmation-container">
         <div class="confirmation-header">
@@ -350,5 +351,6 @@ $total_items = array_sum(array_column($order_items, 'quantity'));
     <!-- Cart JavaScript -->
     <script src="<?= PUBLIC_URL ?>/js/cart.js"></script>
     <script src="<?= PUBLIC_URL ?>/js/header-scroll.js"></script>
+    </div>
 </body>
 </html>

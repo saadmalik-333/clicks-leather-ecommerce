@@ -707,6 +707,21 @@ $addresses = $addresses_stmt->fetchAll(PDO::FETCH_ASSOC);
             flex-wrap: wrap;
         }
 
+        @media (max-width: 1024px) and (min-width: 769px) {
+            .account-layout {
+                grid-template-columns: 220px 1fr;
+                gap: 1.5rem;
+            }
+            
+            .account-sidebar {
+                padding: 1.25rem;
+            }
+            
+            .addresses-list {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+        }
+
         @media (max-width: 768px) {
             .account-layout {
                 grid-template-columns: 1fr;
@@ -714,16 +729,49 @@ $addresses = $addresses_stmt->fetchAll(PDO::FETCH_ASSOC);
 
             .account-sidebar {
                 margin-bottom: 1rem;
+                min-width: 0;
             }
 
             .account-nav {
                 flex-direction: row;
                 overflow-x: auto;
                 padding-bottom: 0.5rem;
+                position: relative;
+            }
+            
+            .account-nav::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                width: 40px;
+                background: linear-gradient(to left, var(--bg-card), transparent);
+                pointer-events: none;
             }
 
             .account-nav-item {
                 white-space: nowrap;
+            }
+
+            .order-header {
+                flex-wrap: wrap;
+                gap: var(--space-sm);
+            }
+            
+            .order-number {
+                flex: 1;
+                min-width: 0;
+            }
+            
+            .order-date {
+                flex: 1;
+                min-width: 0;
+            }
+            
+            .order-status {
+                width: 100%;
+                margin-top: var(--space-sm);
             }
 
             .form-row {
@@ -734,10 +782,21 @@ $addresses = $addresses_stmt->fetchAll(PDO::FETCH_ASSOC);
                 grid-template-columns: 1fr;
             }
         }
+
+        @media (max-width: 480px) {
+            .account-page {
+                padding: 2rem 1rem 3rem;
+            }
+            
+            .account-section {
+                padding: 1rem;
+            }
+        }
     </style>
 </head>
 <body>
     <?php include PUBLIC_PATH . '/includes/header.php'; ?>
+    <div class="page-wrapper">
 
     <?= display_flash_message() ?>
 
@@ -1120,6 +1179,8 @@ $addresses = $addresses_stmt->fetchAll(PDO::FETCH_ASSOC);
         });
     </script>
 
+    <script src="<?= PUBLIC_URL ?>/js/header-scroll.js"></script>
     <script src="<?= PUBLIC_URL ?>/js/password-toggle.js"></script>
+    </div>
 </body>
 </html>

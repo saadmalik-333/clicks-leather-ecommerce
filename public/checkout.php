@@ -599,7 +599,7 @@ $countries = [
 
             .order-summary {
                 position: static;
-                order: -1;
+                order: 1;
                 margin-bottom: 2rem;
             }
 
@@ -611,6 +611,7 @@ $countries = [
 </head>
 <body>
     <?php include PUBLIC_PATH . '/includes/header.php'; ?>
+    <div class="page-wrapper">
 
     <div class="checkout-container">
         <h1 class="page-title" style="text-align: center; margin-bottom: 2rem;">Checkout</h1>
@@ -1006,5 +1007,6 @@ $countries = [
             }
         })();
     </script>
+    </div>
 </body>
 </html>

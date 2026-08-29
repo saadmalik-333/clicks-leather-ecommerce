@@ -129,6 +129,7 @@ require_once INCLUDES_PATH . '/functions.php';
 </head>
 <body>
     <?php include PUBLIC_PATH . '/includes/header.php'; ?>
+    <div class="page-wrapper">
 
     <!-- Main Content -->
     <main class="faq-page">
@@ -225,5 +226,6 @@ require_once INCLUDES_PATH . '/functions.php';
 
     <!-- Multi-Stage Header Scroll Effect with Hysteresis -->
     <script src="<?= PUBLIC_URL ?>/js/header-scroll.js"></script>
+    </div>
 </body>
 </html>

@@ -179,10 +179,6 @@ if ($view_message_id) {
         color: #155724;
     }
 
-    .btn-sm {
-        padding: 0.375rem 0.75rem;
-        font-size: 0.875rem;
-    }
 
     .btn-primary {
         background: var(--color-primary);

@@ -31,6 +31,8 @@ $popular_products = get_popular_products($pdo, 8);
 </head>
 <body>
     <?php include PUBLIC_PATH . '/includes/header.php'; ?>
+    <div class="page-wrapper">
+    
 
     <!-- Hero Section -->
     <section class="hero-section" id="home" style="background-image: url('<?= PUBLIC_URL ?>/img/hero/brown_jacket.jpg'), linear-gradient(to right, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 40%, transparent 60%); background-size: cover; background-position: center right; background-repeat: no-repeat;">
@@ -212,5 +214,6 @@ $popular_products = get_popular_products($pdo, 8);
             });
         });
     </script>
+    </div>
 </body>
 </html>

@@ -122,6 +122,7 @@ $display_description = !empty($product['detail_description']) ? $product['detail
 </head>
 <body>
     <?php include PUBLIC_PATH . '/includes/header.php'; ?>
+    <div class="page-wrapper">
 
     <!-- Product Detail Section -->
     <section class="product-detail-page">
@@ -516,5 +517,6 @@ $display_description = !empty($product['detail_description']) ? $product['detail
             });
         }
     </script>
+    </div>
 </body>
 </html>

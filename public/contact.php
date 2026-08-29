@@ -244,6 +244,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
     <?php include PUBLIC_PATH . '/includes/header.php'; ?>
+    <div class="page-wrapper">
 
     <main class="contact-page">
         <div class="contact-hero">
@@ -318,5 +319,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Cart JavaScript -->
     <script src="<?= PUBLIC_URL ?>/js/cart.js"></script>
     <script src="<?= PUBLIC_URL ?>/js/header-scroll.js"></script>
+    </div>
 </body>
 </html>
