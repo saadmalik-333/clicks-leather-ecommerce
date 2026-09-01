@@ -26,11 +26,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $price = floatval($_POST['price'] ?? 0);
         $category_id = intval($_POST['category_id'] ?? 0);
         $has_personalization = ($_POST['has_personalization'] ?? 'no') === 'yes' ? 'yes' : 'no';
+        $type = sanitize_input($_POST['type'] ?? '');
 
         // Validate
         if (empty($naam)) $errors[] = 'Product name is required.';
         if ($price <= 0) $errors[] = 'Price must be greater than 0.';
         if ($category_id <= 0) $errors[] = 'Please select a category.';
+
+        // Validate type for Wallets and Leather Shoes
+        $stmt = $pdo->prepare("SELECT naam FROM categories WHERE id = :category_id");
+        $stmt->execute([':category_id' => $category_id]);
+        $category = $stmt->fetch();
+        if ($category && in_array($category['naam'], ['Wallets', 'Leather Shoes'])) {
+            if (empty($type)) $errors[] = 'Type is required for ' . $category['naam'] . '.';
+        }
 
         // Handle main image upload
         $image_filename = null;
@@ -86,8 +95,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Insert product
                 $stmt = $pdo->prepare(
-                    "INSERT INTO products (naam, description, detail_title, detail_description, price, category_id, has_personalization, image_path, image_path_alt) 
-                     VALUES (:naam, :description, :detail_title, :detail_description, :price, :category_id, :has_personalization, :image_path, :image_path_alt)"
+                    "INSERT INTO products (naam, description, detail_title, detail_description, price, category_id, has_personalization, type, image_path, image_path_alt)
+                     VALUES (:naam, :description, :detail_title, :detail_description, :price, :category_id, :has_personalization, :type, :image_path, :image_path_alt)"
                 );
                 $stmt->execute([
                     ':naam'                => $naam,
@@ -97,6 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ':price'               => $price,
                     ':category_id'         => $category_id,
                     ':has_personalization'  => $has_personalization,
+                    ':type'                => $type ?: null,
                     ':image_path'          => $image_filename,
                     ':image_path_alt'      => $image_alt_filename
                 ]);
@@ -208,12 +218,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <select id="category_id" name="category_id" required>
                             <option value="">Select Category</option>
                             <?php foreach ($categories as $cat): ?>
-                                <option value="<?= $cat['id'] ?>" 
+                                <option value="<?= $cat['id'] ?>"
                                     data-category="<?= htmlspecialchars($cat['naam']) ?>"
                                     <?= (isset($_POST['category_id']) && $_POST['category_id'] == $cat['id']) ? 'selected' : '' ?>>
                                     <?= htmlspecialchars($cat['naam']) ?>
                                 </option>
                             <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="type-group" style="display: none;">
+                        <label for="type">Type <span class="required">*</span></label>
+                        <select id="type" name="type">
+                            <option value="">Select Type</option>
                         </select>
                     </div>
                 </div>
@@ -338,5 +355,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </form>
 </div>
+
+<script>
+const categorySelect = document.getElementById('category_id');
+const typeDropdown = document.getElementById('type');
+const typeGroup = document.getElementById('type-group');
+
+const typeOptions = {
+    'Wallets': ['Bifold Wallet', 'Long Wallet', 'Card Holder'],
+    'Leather Shoes': ['Loafers', 'Chelsea', 'Long Boots', 'Cowboy Boots', 'Oxford Shoes']
+};
+
+function updateTypeDropdown() {
+    const selectedCategory = categorySelect.options[categorySelect.selectedIndex].getAttribute('data-category');
+
+    if (typeOptions[selectedCategory]) {
+        // Show dropdown and populate
+        typeDropdown.innerHTML = '<option value="">Select Type</option>';
+        typeOptions[selectedCategory].forEach(type => {
+            const selected = (<?= isset($_POST['type']) ? json_encode($_POST['type']) : '""' ?>) === type ? 'selected' : '';
+            typeDropdown.innerHTML += `<option value="${type}" ${selected}>${type}</option>`;
+        });
+        typeGroup.style.display = 'block';
+        typeDropdown.required = true;
+    } else {
+        // Hide dropdown
+        typeGroup.style.display = 'none';
+        typeDropdown.required = false;
+        typeDropdown.value = '';
+    }
+}
+
+categorySelect.addEventListener('change', updateTypeDropdown);
+
+// Trigger on page load
+updateTypeDropdown();
+</script>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

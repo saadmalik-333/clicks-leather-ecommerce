@@ -136,3 +136,4 @@ require_active_session();
 
 <!-- Mobile Menu Script -->
 <script src="<?= PUBLIC_URL ?>/js/mobile-menu.js"></script>
+

@@ -57,7 +57,7 @@ $google_login_url = get_google_login_url();
     <title>Sign Up — Clicks Leather</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="<?= PUBLIC_URL ?>/css/style.css">
+    <link rel="stylesheet" href="<?= PUBLIC_URL ?>/css/style.css?v=<?= time() ?>">
     <meta property="og:title" content="Sign Up — Clicks Leather">
     <meta property="og:description" content="Create your Clicks Leather account — premium leather goods handcrafted for you.">
     <meta property="og:image" content="<?= PUBLIC_URL ?>/img/logo/clicks_leather_logo_dark_transparent.png">

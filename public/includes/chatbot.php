@@ -177,6 +177,7 @@
 
     .chatbot-input {
         flex: 1;
+        min-width: 0;
         padding: 0.75rem 1rem;
         border: 1px solid var(--border-color);
         border-radius: var(--radius-sm);
@@ -227,7 +228,7 @@
             bottom: 80px;
             right: 20px;
             width: calc(100vw - 40px);
-            height: calc(100vh - 120px);
+            height: calc(100dvh - 120px);
         }
     }
 </style>

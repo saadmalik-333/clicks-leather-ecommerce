@@ -24,7 +24,7 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
     <title>Return & Refund Policy — Clicks Leather</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="<?= PUBLIC_URL ?>/css/style.css">
+    <link rel="stylesheet" href="<?= PUBLIC_URL ?>/css/style.css?v=<?= time() ?>">
     <meta property="og:title" content="Return & Refund Policy — Clicks Leather">
     <meta property="og:description" content="Return & Refund Policy for Clicks Leather. Learn about our 14-day return policy for damaged items and fit issues.">
     <meta property="og:image" content="<?= PUBLIC_URL ?>/img/logo/clicks_leather_logo_dark_transparent.png">

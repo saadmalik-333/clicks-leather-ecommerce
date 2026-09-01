@@ -306,7 +306,7 @@ $countries = [
     <title>Checkout — Clicks Leather</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="<?= PUBLIC_URL ?>/css/style.css">
+    <link rel="stylesheet" href="<?= PUBLIC_URL ?>/css/style.css?v=<?= time() ?>">
     <meta property="og:title" content="Checkout — Clicks Leather">
     <meta property="og:description" content="Checkout — Clicks Leather. Premium handcrafted leather goods.">
     <meta property="og:image" content="<?= PUBLIC_URL ?>/img/logo/clicks_leather_logo_dark_transparent.png">
@@ -519,7 +519,7 @@ $countries = [
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             max-height: 200px;
             overflow-y: auto;
-            z-index: 9999;
+            z-index: 10000 !important;
             position: absolute;
         }
 
@@ -972,6 +972,7 @@ $countries = [
                     initialCountry: 'pk',
                     separateDialCode: true,
                     placeholderNumberPolicy: "POLITE",
+                    countrySearch: false,
                     loadUtils: () => import('https://cdn.jsdelivr.net/npm/intl-tel-input@29.1.1/dist/js/utils.js')
                 });
 
@@ -1005,6 +1006,67 @@ $countries = [
                     phoneField.value = iti.getNumber('E164');
                 });
             }
+        })();
+
+        // Force dropdown positioning - override library's internal logic
+        (function() {
+            function forcePositionDropdown() {
+                const phoneField = document.getElementById('phone');
+                const dropdown = document.querySelector('.iti__country-list');
+                if (!phoneField || !dropdown) return;
+
+                const fieldRect = phoneField.getBoundingClientRect();
+
+                // Force fixed positioning, anchored to the phone field's real current position
+                dropdown.style.setProperty('position', 'fixed', 'important');
+                dropdown.style.setProperty('top', (fieldRect.bottom + 4) + 'px', 'important');
+                dropdown.style.setProperty('left', fieldRect.left + 'px', 'important');
+                dropdown.style.setProperty('bottom', 'auto', 'important');
+                dropdown.style.setProperty('right', 'auto', 'important');
+                dropdown.style.setProperty('width', Math.max(fieldRect.width, 280) + 'px', 'important');
+                dropdown.style.setProperty('max-height', '200px', 'important');
+                dropdown.style.setProperty('z-index', '99999', 'important');
+            }
+
+            // Watch for dropdown insertion and force position immediately
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    mutation.addedNodes.forEach((node) => {
+                        if (node.nodeType !== 1) return;
+
+                        const dropdownNode = node.classList && node.classList.contains('iti__country-list')
+                            ? node
+                            : (node.querySelector ? node.querySelector('.iti__country-list') : null);
+
+                        if (dropdownNode) {
+                            // Dropdown just inserted - force position with timing fixes
+                            forcePositionDropdown();
+
+                            requestAnimationFrame(() => {
+                                requestAnimationFrame(() => {
+                                    forcePositionDropdown();
+                                });
+                            });
+
+                            setTimeout(forcePositionDropdown, 50);
+                            setTimeout(forcePositionDropdown, 150);
+                        }
+                    });
+                });
+            });
+
+            // Start observing after a short delay to ensure DOM is ready
+            setTimeout(() => {
+                const phoneField = document.getElementById('phone');
+                if (phoneField) {
+                    // Observe document.body to catch dropdown insertion anywhere in DOM
+                    observer.observe(document.body, { childList: true, subtree: true });
+                }
+            }, 100);
+
+            // Reposition on scroll/resize while dropdown is open
+            window.addEventListener('scroll', forcePositionDropdown);
+            window.addEventListener('resize', forcePositionDropdown);
         })();
     </script>
     </div>

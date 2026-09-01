@@ -15,7 +15,7 @@ $category_name = '';
 
 if (!empty($category_slug)) {
     // Convert slug back to category name (e.g., 'ladies-bags' -> 'Ladies Bags')
-    $category_name = str_replace('-', ' ', ucwords($category_slug));
+    $category_name = ucwords(str_replace('-', ' ', $category_slug));
     $category = get_category_by_name($pdo, $category_name);
 
     // If category doesn't exist, show all products with a message
@@ -27,16 +27,12 @@ if (!empty($category_slug)) {
 }
 
 // Get filter parameters from URL
-$selected_colors = $_GET['color'] ?? [];
-$selected_materials = $_GET['material'] ?? [];
+$selected_types = $_GET['type'] ?? [];
 $selected_price = $_GET['price'] ?? 'all';
 
 // Ensure arrays for multiple selections
-if (!is_array($selected_colors)) {
-    $selected_colors = [$selected_colors];
-}
-if (!is_array($selected_materials)) {
-    $selected_materials = [$selected_materials];
+if (!is_array($selected_types)) {
+    $selected_types = [$selected_types];
 }
 
 // Build query with filters
@@ -53,24 +49,14 @@ if (!empty($category_name)) {
     $params[':category_name'] = $category_name;
 }
 
-// Add color filter
-if (!empty($selected_colors)) {
+// Add type filter
+if (!empty($selected_types)) {
     $placeholders = [];
-    foreach ($selected_colors as $i => $color) {
-        $placeholders[] = ':color_' . $i;
-        $params[':color_' . $i] = $color;
+    foreach ($selected_types as $i => $type) {
+        $placeholders[] = ':type_' . $i;
+        $params[':type_' . $i] = $type;
     }
-    $where_clauses[] = "p.color IN (" . implode(',', $placeholders) . ")";
-}
-
-// Add material filter
-if (!empty($selected_materials)) {
-    $placeholders = [];
-    foreach ($selected_materials as $i => $material) {
-        $placeholders[] = ':material_' . $i;
-        $params[':material_' . $i] = $material;
-    }
-    $where_clauses[] = "p.material IN (" . implode(',', $placeholders) . ")";
+    $where_clauses[] = "p.type IN (" . implode(',', $placeholders) . ")";
 }
 
 // Add price filter
@@ -122,7 +108,7 @@ function is_filter_selected($value, $selected_array) {
     <title><?= $category ? htmlspecialchars($category['naam']) : 'Shop All' ?> — Clicks Leather</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="<?= PUBLIC_URL ?>/css/style.css">
+    <link rel="stylesheet" href="<?= PUBLIC_URL ?>/css/style.css?v=<?= time() ?>">
     <meta property="og:title" content="<?= $category ? htmlspecialchars($category['naam']) : 'Shop All' ?> — Clicks Leather">
     <meta property="og:description" content="Clicks Leather — <?= $category ? htmlspecialchars($category['naam']) . ' collection' : 'Shop All' ?>. Premium handcrafted leather goods.">
     <meta property="og:image" content="<?= PUBLIC_URL ?>/img/logo/clicks_leather_logo_dark_transparent.png">
@@ -149,46 +135,52 @@ function is_filter_selected($value, $selected_array) {
                 <aside class="filters-sidebar">
                     <form method="GET" action="" id="filter-form">
                         <input type="hidden" name="category" value="<?= htmlspecialchars($category_slug) ?>">
-                        
-                        <div class="filter-section">
-                            <h3 class="filter-title">Color</h3>
-                            <div class="filter-options">
-                                <label class="filter-option">
-                                    <input type="checkbox" name="color[]" value="black" <?= is_filter_selected('black', $selected_colors) ? 'checked' : '' ?> onchange="this.form.submit()">
-                                    <span>Black</span>
-                                </label>
-                                <label class="filter-option">
-                                    <input type="checkbox" name="color[]" value="brown" <?= is_filter_selected('brown', $selected_colors) ? 'checked' : '' ?> onchange="this.form.submit()">
-                                    <span>Brown</span>
-                                </label>
-                                <label class="filter-option">
-                                    <input type="checkbox" name="color[]" value="tan" <?= is_filter_selected('tan', $selected_colors) ? 'checked' : '' ?> onchange="this.form.submit()">
-                                    <span>Tan</span>
-                                </label>
-                                <label class="filter-option">
-                                    <input type="checkbox" name="color[]" value="cognac" <?= is_filter_selected('cognac', $selected_colors) ? 'checked' : '' ?> onchange="this.form.submit()">
-                                    <span>Cognac</span>
-                                </label>
-                            </div>
-                        </div>
 
+                        <?php if ($category_name === 'Wallets'): ?>
                         <div class="filter-section">
-                            <h3 class="filter-title">Material</h3>
+                            <h3 class="filter-title">Type</h3>
                             <div class="filter-options">
                                 <label class="filter-option">
-                                    <input type="checkbox" name="material[]" value="full-grain" <?= is_filter_selected('full-grain', $selected_materials) ? 'checked' : '' ?> onchange="this.form.submit()">
-                                    <span>Full Grain</span>
+                                    <input type="checkbox" name="type[]" value="Bifold Wallet" <?= is_filter_selected('Bifold Wallet', $selected_types) ? 'checked' : '' ?> onchange="this.form.submit()">
+                                    <span>Bifold Wallet</span>
                                 </label>
                                 <label class="filter-option">
-                                    <input type="checkbox" name="material[]" value="top-grain" <?= is_filter_selected('top-grain', $selected_materials) ? 'checked' : '' ?> onchange="this.form.submit()">
-                                    <span>Top Grain</span>
+                                    <input type="checkbox" name="type[]" value="Long Wallet" <?= is_filter_selected('Long Wallet', $selected_types) ? 'checked' : '' ?> onchange="this.form.submit()">
+                                    <span>Long Wallet</span>
                                 </label>
                                 <label class="filter-option">
-                                    <input type="checkbox" name="material[]" value="genuine" <?= is_filter_selected('genuine', $selected_materials) ? 'checked' : '' ?> onchange="this.form.submit()">
-                                    <span>Genuine</span>
+                                    <input type="checkbox" name="type[]" value="Card Holder" <?= is_filter_selected('Card Holder', $selected_types) ? 'checked' : '' ?> onchange="this.form.submit()">
+                                    <span>Card Holder</span>
                                 </label>
                             </div>
                         </div>
+                        <?php elseif ($category_name === 'Leather Shoes'): ?>
+                        <div class="filter-section">
+                            <h3 class="filter-title">Type</h3>
+                            <div class="filter-options">
+                                <label class="filter-option">
+                                    <input type="checkbox" name="type[]" value="Loafers" <?= is_filter_selected('Loafers', $selected_types) ? 'checked' : '' ?> onchange="this.form.submit()">
+                                    <span>Loafers</span>
+                                </label>
+                                <label class="filter-option">
+                                    <input type="checkbox" name="type[]" value="Chelsea" <?= is_filter_selected('Chelsea', $selected_types) ? 'checked' : '' ?> onchange="this.form.submit()">
+                                    <span>Chelsea</span>
+                                </label>
+                                <label class="filter-option">
+                                    <input type="checkbox" name="type[]" value="Long Boots" <?= is_filter_selected('Long Boots', $selected_types) ? 'checked' : '' ?> onchange="this.form.submit()">
+                                    <span>Long Boots</span>
+                                </label>
+                                <label class="filter-option">
+                                    <input type="checkbox" name="type[]" value="Cowboy Boots" <?= is_filter_selected('Cowboy Boots', $selected_types) ? 'checked' : '' ?> onchange="this.form.submit()">
+                                    <span>Cowboy Boots</span>
+                                </label>
+                                <label class="filter-option">
+                                    <input type="checkbox" name="type[]" value="Oxford Shoes" <?= is_filter_selected('Oxford Shoes', $selected_types) ? 'checked' : '' ?> onchange="this.form.submit()">
+                                    <span>Oxford Shoes</span>
+                                </label>
+                            </div>
+                        </div>
+                        <?php endif; ?>
 
                         <div class="filter-section">
                             <h3 class="filter-title">Price Range</h3>
@@ -212,7 +204,7 @@ function is_filter_selected($value, $selected_array) {
                             </div>
                         </div>
 
-                        <?php if (!empty($selected_colors) || !empty($selected_materials) || $selected_price !== 'all'): ?>
+                        <?php if (!empty($selected_types) || $selected_price !== 'all'): ?>
                             <div class="filter-section">
                                 <a href="?category=<?= htmlspecialchars($category_slug) ?>" class="btn btn-outline btn-sm">Clear All Filters</a>
                             </div>
