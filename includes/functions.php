@@ -11,13 +11,28 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 /**
- * Sanitize user input — trim whitespace and escape HTML entities
+ * Clean user input for database storage — trim whitespace and remove magic quotes
+ * Does NOT escape HTML entities — that should be done at output time
  */
-function sanitize_input(string $data): string {
+function clean_input(string $data): string {
     $data = trim($data);
     $data = stripslashes($data);
-    $data = htmlspecialchars($data, ENT_QUOTES, 'UTF-8');
     return $data;
+}
+
+/**
+ * Escape HTML entities for safe output — use when echoing to HTML
+ */
+function escape_html(string $data): string {
+    return htmlspecialchars($data, ENT_QUOTES, 'UTF-8');
+}
+
+/**
+ * @deprecated Use clean_input() for storage, escape_html() for output
+ * Kept for backward compatibility
+ */
+function sanitize_input(string $data): string {
+    return escape_html($data);
 }
 
 /**

@@ -25,7 +25,7 @@ $is_google_user = !empty($user_google_id);
 
 // Profile Update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_profile') {
-    $new_name = sanitize_input($_POST['name'] ?? '');
+    $new_name = clean_input($_POST['name'] ?? '');
     // Email is read-only and cannot be changed via this form
     
     $errors = [];
@@ -113,13 +113,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 // Add Address
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_address') {
     $address_data = [
-        'full_name' => sanitize_input($_POST['full_name'] ?? ''),
-        'address_line1' => sanitize_input($_POST['address_line1'] ?? ''),
-        'address_line2' => sanitize_input($_POST['address_line2'] ?? ''),
-        'city' => sanitize_input($_POST['city'] ?? ''),
-        'state' => sanitize_input($_POST['state'] ?? ''),
-        'country' => sanitize_input($_POST['country'] ?? ''),
-        'postal_code' => sanitize_input($_POST['postal_code'] ?? ''),
+        'full_name' => clean_input($_POST['full_name'] ?? ''),
+        'address_line1' => clean_input($_POST['address_line1'] ?? ''),
+        'address_line2' => clean_input($_POST['address_line2'] ?? ''),
+        'city' => clean_input($_POST['city'] ?? ''),
+        'state' => clean_input($_POST['state'] ?? ''),
+        'country' => clean_input($_POST['country'] ?? ''),
+        'postal_code' => clean_input($_POST['postal_code'] ?? ''),
         'is_default' => isset($_POST['is_default']) ? 1 : 0,
     ];
     
@@ -176,13 +176,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'edit_address') {
     $address_id = intval($_POST['address_id'] ?? 0);
     $address_data = [
-        'full_name' => sanitize_input($_POST['full_name'] ?? ''),
-        'address_line1' => sanitize_input($_POST['address_line1'] ?? ''),
-        'address_line2' => sanitize_input($_POST['address_line2'] ?? ''),
-        'city' => sanitize_input($_POST['city'] ?? ''),
-        'state' => sanitize_input($_POST['state'] ?? ''),
-        'country' => sanitize_input($_POST['country'] ?? ''),
-        'postal_code' => sanitize_input($_POST['postal_code'] ?? ''),
+        'full_name' => clean_input($_POST['full_name'] ?? ''),
+        'address_line1' => clean_input($_POST['address_line1'] ?? ''),
+        'address_line2' => clean_input($_POST['address_line2'] ?? ''),
+        'city' => clean_input($_POST['city'] ?? ''),
+        'state' => clean_input($_POST['state'] ?? ''),
+        'country' => clean_input($_POST['country'] ?? ''),
+        'postal_code' => clean_input($_POST['postal_code'] ?? ''),
         'is_default' => isset($_POST['is_default']) ? 1 : 0,
     ];
     

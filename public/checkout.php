@@ -136,15 +136,15 @@ $form_data = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $form_data = [
-        'email' => sanitize_input($_POST['email'] ?? ''),
-        'phone' => sanitize_input($_POST['phone'] ?? ''),
-        'full_name' => sanitize_input($_POST['full_name'] ?? ''),
-        'address_line1' => sanitize_input($_POST['address_line1'] ?? ''),
-        'address_line2' => sanitize_input($_POST['address_line2'] ?? ''),
-        'city' => sanitize_input($_POST['city'] ?? ''),
-        'state' => sanitize_input($_POST['state'] ?? ''),
-        'country' => sanitize_input($_POST['country'] ?? ''),
-        'postal_code' => sanitize_input($_POST['postal_code'] ?? ''),
+        'email' => clean_input($_POST['email'] ?? ''),
+        'phone' => clean_input($_POST['phone'] ?? ''),
+        'full_name' => clean_input($_POST['full_name'] ?? ''),
+        'address_line1' => clean_input($_POST['address_line1'] ?? ''),
+        'address_line2' => clean_input($_POST['address_line2'] ?? ''),
+        'city' => clean_input($_POST['city'] ?? ''),
+        'state' => clean_input($_POST['state'] ?? ''),
+        'country' => clean_input($_POST['country'] ?? ''),
+        'postal_code' => clean_input($_POST['postal_code'] ?? ''),
     ];
 
     // Validation

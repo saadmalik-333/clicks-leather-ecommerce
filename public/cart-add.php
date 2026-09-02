@@ -30,10 +30,10 @@ try {
     }
     
     $product_id = intval($input['product_id'] ?? 0);
-    $color = sanitize_input($input['color'] ?? '');
-    $size = sanitize_input($input['size'] ?? '');
+    $color = clean_input($input['color'] ?? '');
+    $size = clean_input($input['size'] ?? '');
     $quantity = intval($input['quantity'] ?? 1);
-    $personalization_text = sanitize_input($input['personalization_text'] ?? '');
+    $personalization_text = clean_input($input['personalization_text'] ?? '');
     
     // If personalization text is empty, set to null
     if (empty($personalization_text)) {

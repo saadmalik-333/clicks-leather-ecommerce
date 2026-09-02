@@ -39,15 +39,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!isset($_POST['csrf_token']) || !verify_csrf_token($_POST['csrf_token'])) {
         $errors[] = 'Invalid form submission. Please try again.';
     } else {
-        $naam = sanitize_input($_POST['naam'] ?? '');
-        $description = sanitize_input($_POST['description'] ?? '');
-        $detail_title = sanitize_input($_POST['detail_title'] ?? '');
+        $naam = clean_input($_POST['naam'] ?? '');
+        $description = clean_input($_POST['description'] ?? '');
+        $detail_title = clean_input($_POST['detail_title'] ?? '');
         $detail_description = $_POST['detail_description'] ?? '';
         $price = floatval($_POST['price'] ?? 0);
         $category_id = intval($_POST['category_id'] ?? 0);
         $has_personalization = ($_POST['has_personalization'] ?? 'no') === 'yes' ? 'yes' : 'no';
         $is_popular = ($_POST['is_popular'] ?? '0') === '1' ? 1 : 0;
-        $type = sanitize_input($_POST['type'] ?? '');
+        $type = clean_input($_POST['type'] ?? '');
 
         if (empty($naam)) $errors[] = 'Product name is required.';
         if ($price <= 0) $errors[] = 'Price must be greater than 0.';
@@ -214,8 +214,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 );
 
                 for ($i = 0; $i < count($sizes); $i++) {
-                    $size  = sanitize_input($sizes[$i] ?? '');
-                    $color = sanitize_input($colors[$i] ?? '');
+                    $size  = clean_input($sizes[$i] ?? '');
+                    $color = clean_input($colors[$i] ?? '');
                     $stock = intval($stocks[$i] ?? 0);
 
                     if (!empty($size) || !empty($color)) {

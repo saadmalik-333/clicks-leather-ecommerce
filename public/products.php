@@ -61,14 +61,14 @@ if (!empty($selected_types)) {
 
 // Add price filter
 switch ($selected_price) {
-    case 'under-50':
-        $where_clauses[] = "p.price < 50";
+    case 'under-100':
+        $where_clauses[] = "p.price < 100";
         break;
-    case '50-100':
-        $where_clauses[] = "p.price >= 50 AND p.price <= 100";
+    case '100-250':
+        $where_clauses[] = "p.price >= 100 AND p.price <= 250";
         break;
-    case 'over-100':
-        $where_clauses[] = "p.price > 100";
+    case 'over-250':
+        $where_clauses[] = "p.price > 250";
         break;
     // 'all' - no filter
 }
@@ -190,16 +190,16 @@ function is_filter_selected($value, $selected_array) {
                                     <span>All Prices</span>
                                 </label>
                                 <label class="filter-option">
-                                    <input type="radio" name="price" value="under-50" <?= $selected_price === 'under-50' ? 'checked' : '' ?> onchange="this.form.submit()">
-                                    <span>Under $50</span>
+                                    <input type="radio" name="price" value="under-100" <?= $selected_price === 'under-100' ? 'checked' : '' ?> onchange="this.form.submit()">
+                                    <span>Under $100</span>
                                 </label>
                                 <label class="filter-option">
-                                    <input type="radio" name="price" value="50-100" <?= $selected_price === '50-100' ? 'checked' : '' ?> onchange="this.form.submit()">
-                                    <span>$50 - $100</span>
+                                    <input type="radio" name="price" value="100-250" <?= $selected_price === '100-250' ? 'checked' : '' ?> onchange="this.form.submit()">
+                                    <span>$100 - $250</span>
                                 </label>
                                 <label class="filter-option">
-                                    <input type="radio" name="price" value="over-100" <?= $selected_price === 'over-100' ? 'checked' : '' ?> onchange="this.form.submit()">
-                                    <span>Over $100</span>
+                                    <input type="radio" name="price" value="over-250" <?= $selected_price === 'over-250' ? 'checked' : '' ?> onchange="this.form.submit()">
+                                    <span>Over $250</span>
                                 </label>
                             </div>
                         </div>

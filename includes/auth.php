@@ -17,8 +17,8 @@ require_once __DIR__ . '/google_config.php';
  */
 function register_user(PDO $pdo, string $naam, string $email, string $password, string $confirm_password): array {
     // Validate inputs
-    $naam = sanitize_input($naam);
-    $email = sanitize_input($email);
+    $naam = clean_input($naam);
+    $email = clean_input($email);
 
     if (empty($naam) || empty($email) || empty($password)) {
         return ['success' => false, 'message' => 'All fields are required.'];
@@ -66,7 +66,7 @@ function register_user(PDO $pdo, string $naam, string $email, string $password, 
  * @return array ['success' => bool, 'message' => string, 'redirect' => string|null]
  */
 function login_user(PDO $pdo, string $email, string $password, bool $force_customer_role = false): array {
-    $email = sanitize_input($email);
+    $email = clean_input($email);
 
     if (empty($email) || empty($password)) {
         return ['success' => false, 'message' => 'Email and password are required.', 'redirect' => null];
