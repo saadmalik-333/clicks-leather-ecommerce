@@ -29,6 +29,10 @@ $shipping_flat_cost = floatval(get_setting($pdo, 'shipping_flat_cost', '15.00'))
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= PUBLIC_URL ?>/css/style.css?v=<?= time() ?>">
+    <link rel="icon" type="image/x-icon" href="<?= PUBLIC_URL ?>/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="<?= PUBLIC_URL ?>/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="<?= PUBLIC_URL ?>/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="<?= PUBLIC_URL ?>/apple-touch-icon.png">
     <meta property="og:title" content="Shipping Information — Clicks Leather">
     <meta property="og:description" content="Shipping Information for Clicks Leather. Learn about our delivery timeline and <?= $shipping_is_free === 'yes' ? 'free shipping' : 'shipping from ' . format_price($shipping_flat_cost) ?> offer.">
     <meta property="og:image" content="<?= PUBLIC_URL ?>/img/logo/clicks_leather_logo_dark_transparent.png">

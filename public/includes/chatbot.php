@@ -4,35 +4,6 @@
  * Floating keyword-based FAQ chatbot
  */
 ?>
-<!-- Chatbot Widget -->
-<div id="chatbot-bubble" class="chatbot-bubble">
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"></path>
-    </svg>
-</div>
-
-<div id="chatbot-window" class="chatbot-window">
-    <div class="chatbot-header">
-        <h3>Clicks Leather Assistant</h3>
-        <button id="chatbot-close" class="chatbot-close" aria-label="Close chat">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-        </button>
-    </div>
-    <div id="chatbot-messages" class="chatbot-messages"></div>
-    <div class="chatbot-input-area">
-        <input type="text" id="chatbot-input" class="chatbot-input" placeholder="Ask me anything..." autocomplete="off">
-        <button id="chatbot-send" class="chatbot-send" aria-label="Send message">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="22" y1="2" x2="11" y2="13"></line>
-                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-            </svg>
-        </button>
-    </div>
-</div>
-
 <style>
     .chatbot-bubble {
         position: fixed;
@@ -232,6 +203,35 @@
         }
     }
 </style>
+
+<!-- Chatbot Widget -->
+<div id="chatbot-bubble" class="chatbot-bubble">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"></path>
+    </svg>
+</div>
+
+<div id="chatbot-window" class="chatbot-window">
+    <div class="chatbot-header">
+        <h3>Clicks Leather Assistant</h3>
+        <button id="chatbot-close" class="chatbot-close" aria-label="Close chat">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+    </div>
+    <div id="chatbot-messages" class="chatbot-messages"></div>
+    <div class="chatbot-input-area">
+        <input type="text" id="chatbot-input" class="chatbot-input" placeholder="Ask me anything..." autocomplete="off">
+        <button id="chatbot-send" class="chatbot-send" aria-label="Send message">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+        </button>
+    </div>
+</div>
 
 <script>const CHATBOT_BASE_URL = '<?= PUBLIC_URL ?>';</script>
 <script src="<?= PUBLIC_URL ?>/js/chatbot.js?v=<?= filemtime(__DIR__ . '/../js/chatbot.js') ?>"></script>

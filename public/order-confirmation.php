@@ -66,6 +66,10 @@ $total_items = array_sum(array_column($order_items, 'quantity'));
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= PUBLIC_URL ?>/css/style.css?v=<?= time() ?>">
+    <link rel="icon" type="image/x-icon" href="<?= PUBLIC_URL ?>/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="<?= PUBLIC_URL ?>/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="<?= PUBLIC_URL ?>/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="<?= PUBLIC_URL ?>/apple-touch-icon.png">
     <meta property="og:title" content="Order Confirmation — Clicks Leather">
     <meta property="og:description" content="Order Confirmation — Clicks Leather. Premium handcrafted leather goods.">
     <meta property="og:image" content="<?= PUBLIC_URL ?>/img/logo/clicks_leather_logo_dark_transparent.png">

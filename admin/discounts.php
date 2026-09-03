@@ -108,6 +108,12 @@ if ($edit_discount_id) {
 $stmt = $pdo->query("
     SELECT d.*, 
            CASE 
+               WHEN d.is_active = 0 THEN 'Inactive'
+               WHEN d.start_date IS NOT NULL AND d.start_date > CURDATE() THEN 'Scheduled'
+               WHEN d.end_date IS NOT NULL AND d.end_date < CURDATE() THEN 'Expired'
+               ELSE 'Active'
+           END as computed_status,
+           CASE 
                WHEN d.type = 'sitewide' THEN 'Sitewide'
                WHEN d.type = 'category' THEN (SELECT naam FROM categories WHERE id = d.target_id)
                WHEN d.type = 'product' THEN (SELECT naam FROM products WHERE id = d.target_id)
@@ -251,12 +257,12 @@ require_once __DIR__ . '/includes/header.php';
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <span class="status-badge <?= $discount['is_active'] ? 'status-delivered' : 'status-cancelled' ?>">
-                                    <?= $discount['is_active'] ? 'Active' : 'Inactive' ?>
+                                <span class="status-badge status-<?= strtolower($discount['computed_status']) ?>">
+                                    <?= htmlspecialchars($discount['computed_status']) ?>
                                 </span>
                             </td>
                             <td>
-                                <div class="actions-cell">
+                                <div class="actions-wrapper">
                                     <form method="POST" action="<?= ADMIN_URL ?>/discounts.php" style="display: inline;">
                                         <input type="hidden" name="discount_id" value="<?= $discount['id'] ?>">
                                         <input type="hidden" name="is_active" value="<?= $discount['is_active'] ? 0 : 1 ?>">
