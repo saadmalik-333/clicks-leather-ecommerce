@@ -32,6 +32,7 @@ try {
     $product_id = intval($input['product_id'] ?? 0);
     $color = clean_input($input['color'] ?? '');
     $size = clean_input($input['size'] ?? '');
+    $size_display = clean_input($input['size_display'] ?? '');
     $quantity = intval($input['quantity'] ?? 1);
     $personalization_text = clean_input($input['personalization_text'] ?? '');
     
@@ -53,7 +54,7 @@ try {
     }
     
     // Get product details
-    $stmt = $pdo->prepare("SELECT id, price, category_id FROM products WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT id, price, custom_size_price, category_id FROM products WHERE id = ?");
     $stmt->execute([$product_id]);
     $product = $stmt->fetch(PDO::FETCH_ASSOC);
     
@@ -71,29 +72,53 @@ try {
     // Find variant_id if color/size provided
     $variant_id = null;
     if (!empty($color) || !empty($size)) {
-        $stmt = $pdo->prepare("SELECT id, stock_quantity FROM product_variants WHERE product_id = ? AND color = ? AND size = ?");
-        $stmt->execute([$product_id, $color, $size]);
-        $variant = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if ($variant) {
-            $variant_id = $variant['id'];
-            
-            // Check stock
-            if ($variant['stock_quantity'] < $quantity) {
-                http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'Insufficient stock']);
-                exit;
+        // Skip variant lookup for custom sizes
+        if ($size === 'custom') {
+            // Custom size - no variant matching, add custom_size_price to base price if set
+            $variant_id = null;
+            if (!empty($product['custom_size_price'])) {
+                $discounted_price = $discounted_price + $product['custom_size_price'];
             }
         } else {
-            // Variant not found - check if product has variants at all
-            $stmt = $pdo->prepare("SELECT COUNT(*) FROM product_variants WHERE product_id = ?");
-            $stmt->execute([$product_id]);
-            $has_variants = $stmt->fetchColumn() > 0;
+            // Build query dynamically based on what was provided
+            $where_conditions = ['product_id = ?'];
+            $params = [$product_id];
+
+            if (!empty($color)) {
+                $where_conditions[] = 'color = ?';
+                $params[] = $color;
+            }
+
+            if (!empty($size)) {
+                $where_conditions[] = 'size = ?';
+                $params[] = $size;
+            }
+
+            $where_clause = implode(' AND ', $where_conditions);
+            $stmt = $pdo->prepare("SELECT id, stock_quantity FROM product_variants WHERE $where_clause");
+            $stmt->execute($params);
+            $variant = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            if ($has_variants) {
-                http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'Please select a color/size']);
-                exit;
+            if ($variant) {
+                $variant_id = $variant['id'];
+                
+                // Check stock
+                if ($variant['stock_quantity'] < $quantity) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => 'Insufficient stock']);
+                    exit;
+                }
+            } else {
+                // Variant not found - check if product has variants at all
+                $stmt = $pdo->prepare("SELECT COUNT(*) FROM product_variants WHERE product_id = ?");
+                $stmt->execute([$product_id]);
+                $has_variants = $stmt->fetchColumn() > 0;
+                
+                if ($has_variants) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => 'Please select a color/size']);
+                    exit;
+                }
             }
         }
     }
@@ -134,8 +159,8 @@ try {
         $stmt->execute([$new_quantity, $existing_item['id']]);
     } else {
         // Insert new item with discounted price
-        $stmt = $pdo->prepare("INSERT INTO cart_items (user_id, session_id, product_id, variant_id, quantity, discounted_price, discount_percent, personalization_text) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$user_id, $session_id, $product_id, $variant_id, $quantity, $discounted_price, $discount_percent, $personalization_text]);
+        $stmt = $pdo->prepare("INSERT INTO cart_items (user_id, session_id, product_id, variant_id, color, quantity, discounted_price, discount_percent, personalization_text, size_display) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$user_id, $session_id, $product_id, $variant_id, $color, $quantity, $discounted_price, $discount_percent, $personalization_text, $size_display]);
     }
     
     // Get updated cart count

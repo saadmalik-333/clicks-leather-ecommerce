@@ -44,7 +44,8 @@ try {
                 p.image_path,
                 pv.id as variant_id,
                 pv.color,
-                pv.size
+                pv.size,
+                ci.size_display
             FROM cart_items ci
             JOIN products p ON ci.product_id = p.id
             LEFT JOIN product_variants pv ON ci.variant_id = pv.id
@@ -67,7 +68,8 @@ try {
                 p.image_path,
                 pv.id as variant_id,
                 pv.color,
-                pv.size
+                pv.size,
+                ci.size_display
             FROM cart_items ci
             JOIN products p ON ci.product_id = p.id
             LEFT JOIN product_variants pv ON ci.variant_id = pv.id

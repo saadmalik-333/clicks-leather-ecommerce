@@ -11,6 +11,15 @@ $category_images = get_category_representative_images($pdo);
 
 // Fetch popular products
 $popular_products = get_popular_products($pdo, 8);
+
+// Fetch hero slides
+$hero_slides_stmt = $pdo->query("SELECT * FROM hero_slides ORDER BY sort_order");
+$hero_slides = $hero_slides_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Get hero text from settings
+$hero_subtitle = get_setting($pdo, 'hero_subtitle', 'Handcrafted Excellence');
+$hero_title = get_setting($pdo, 'hero_title', 'Premium Leather, Timeless Craft');
+$hero_description = get_setting($pdo, 'hero_description', 'Discover our collection of handcrafted leather goods...');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -39,17 +48,39 @@ $popular_products = get_popular_products($pdo, 8);
     
 
     <!-- Hero Section -->
-    <section class="hero-section" id="home" style="background-image: url('<?= PUBLIC_URL ?>/img/hero/brown_jacket.jpg'), linear-gradient(to right, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 40%, transparent 60%); background-size: cover; background-position: center right; background-repeat: no-repeat;">
-        <div class="hero-content">
-            <span class="hero-subtitle">Handcrafted Excellence</span>
-            <h1 class="hero-title">Premium Leather,<br>Timeless Craft</h1>
-            <p class="hero-description">
-                Discover our collection of handcrafted leather goods — from classic wallets
-                to bespoke jackets. Each piece tells a story of quality and craftsmanship.
-            </p>
-            <div class="hero-actions">
-                <a href="#categories" class="btn btn-primary" id="hero-explore-btn">Explore Collection</a>
-                <a href="<?= PUBLIC_URL ?>/signup.php" class="btn btn-outline" id="hero-join-btn">Join Us</a>
+    <section class="hero-section" id="home">
+        <?php if (!empty($hero_slides)): ?>
+            <div class="hero-carousel">
+                <div class="hero-carousel-track">
+                    <?php foreach ($hero_slides as $slide): ?>
+                        <div class="hero-slide">
+                            <img src="<?= PUBLIC_URL ?>/uploads/<?= htmlspecialchars($slide['image_path']) ?>" 
+                                 alt="Hero Slide <?= $slide['sort_order'] ?>" 
+                                 loading="eager">
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            
+            <!-- Dot Indicators (tablet/mobile only) -->
+            <div class="hero-carousel-dots">
+                <?php for ($i = 0; $i < count($hero_slides); $i++): ?>
+                    <button class="hero-dot" data-slide="<?= $i ?>" aria-label="Go to slide <?= $i + 1 ?>"></button>
+                <?php endfor; ?>
+            </div>
+        <?php endif; ?>
+        
+        <div class="hero-content-wrapper">
+            <div class="hero-content">
+                <span class="hero-subtitle"><?= htmlspecialchars($hero_subtitle) ?></span>
+                <h1 class="hero-title"><?= preg_replace('/,\s*/', ',<br>', htmlspecialchars($hero_title), 1) ?></h1>
+                <p class="hero-description">
+                    <?= htmlspecialchars($hero_description) ?>
+                </p>
+                <div class="hero-actions">
+                    <a href="#categories" class="btn btn-primary" id="hero-explore-btn">Explore Collection</a>
+                    <a href="<?= PUBLIC_URL ?>/signup.php" class="btn btn-outline" id="hero-join-btn">Join Us</a>
+                </div>
             </div>
         </div>
     </section>
@@ -201,6 +232,7 @@ $popular_products = get_popular_products($pdo, 8);
     <script src="<?= PUBLIC_URL ?>/js/cart.js"></script>
     <script src="<?= PUBLIC_URL ?>/js/header-scroll.js"></script>
     <script src="<?= PUBLIC_URL ?>/js/circular-showcase.js"></script>
+    <script src="<?= PUBLIC_URL ?>/js/hero-carousel.js"></script>
 
     <script>
         // Smooth scroll for anchor links

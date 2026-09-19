@@ -243,11 +243,15 @@ function addVariant() {
             <label>Size</label>
             <input type="text" name="variant_size[]" placeholder="e.g., M, L, 42">
         </div>
-        <div class="variant-field">
+        <div class="variant-field color-field">
             <label>Color</label>
             <input type="text" name="variant_color[]" placeholder="e.g., Brown">
         </div>
-        <div class="variant-field">
+        <div class="variant-field hex-field">
+            <label>Hex Code</label>
+            <input type="color" name="variant_hex[]" value="#000000">
+        </div>
+        <div class="variant-field stock-field">
             <label>Stock</label>
             <input type="number" name="variant_stock[]" min="0" value="0">
         </div>
@@ -299,8 +303,8 @@ window.addGalleryImage = function() {
     row.id = 'gallery-image-row-' + galleryImageCounter;
     row.innerHTML = `
         <div class="variant-field" style="flex: 2;">
-            <label>Image</label>
-            <input type="file" name="gallery_images[]" accept=".jpg,.jpeg,.png">
+            <label>Image or Video</label>
+            <input type="file" name="gallery_images[]" accept=".jpg,.jpeg,.png,.mp4,.webm,.ogg">
         </div>
         <div class="variant-field">
             <label>Sort Order</label>
@@ -327,4 +331,72 @@ window.removeGalleryImage = function(btn) {
     setTimeout(function () {
         row.remove();
     }, 200);
+};
+
+let colorImageCounter = 0;
+
+window.addColorImageRow = function() {
+    const container = document.getElementById('color-images-container');
+
+    if (!container) {
+        console.error('Color images container not found');
+        return;
+    }
+
+    const card = document.createElement('div');
+    card.className = 'color-image-card';
+    card.id = 'color-image-card-' + colorImageCounter;
+    card.style.cssText = 'display: inline-block; position: relative;';
+    card.innerHTML = `
+        <label style="cursor: pointer; display: block;">
+            <input type="file" name="color_image_file[]" accept=".jpg,.jpeg,.png" style="display: none;" onchange="previewColorImage(this)">
+            <div style="width: 80px; height: 80px; border: 2px dashed var(--border-color); border-radius: var(--radius-sm); display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg-muted);">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                </svg>
+                <span style="font-size: 0.7rem; color: var(--text-muted); margin-top: 4px;">Add Image</span>
+            </div>
+        </label>
+        <input type="text" name="color_image_color[]" placeholder="Color" style="width: 80px; font-size: 0.75rem; margin-top: var(--space-xs); padding: 4px;">
+        <input type="hidden" name="color_image_id[]" value="">
+        <label style="display: block; font-size: 0.75rem; margin-top: var(--space-xs);">
+            <input type="checkbox" name="color_image_remove[]" value=""> Remove
+        </label>
+        <button type="button" class="btn-remove-variant" onclick="removeColorImageRow(this)" title="Remove" style="position: absolute; top: -8px; right: -8px;">×</button>
+    `;
+
+    container.appendChild(card);
+    colorImageCounter++;
+};
+
+window.previewColorImage = function(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const label = input.parentElement;
+            const placeholder = label.querySelector('div');
+            if (placeholder) {
+                placeholder.outerHTML = `
+                    <div style="position: relative; width: 80px; height: 80px;">
+                        <img src="${e.target.result}" alt="Color image" style="width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                        <div style="position: absolute; bottom: 4px; right: 4px; background: rgba(0,0,0,0.6); border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                                <circle cx="12" cy="13" r="4"/>
+                            </svg>
+                        </div>
+                    </div>
+                `;
+            }
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+};
+
+window.removeColorImageRow = function(button) {
+    const card = button.closest('.color-image-card');
+    if (card) {
+        card.remove();
+    }
 };

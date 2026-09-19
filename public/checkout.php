@@ -39,13 +39,16 @@ if ($user_id) {
             ci.discounted_price,
             ci.discount_percent,
             ci.personalization_text,
+            ci.color,
             p.id as product_id,
             p.naam as product_name,
             p.price,
+            p.custom_size_price,
             p.image_path,
             pv.id as variant_id,
-            pv.color,
-            pv.size
+            pv.color as variant_color,
+            pv.size,
+            ci.size_display
         FROM cart_items ci
         JOIN products p ON ci.product_id = p.id
         LEFT JOIN product_variants pv ON ci.variant_id = pv.id
@@ -62,13 +65,16 @@ if ($user_id) {
             ci.discounted_price,
             ci.discount_percent,
             ci.personalization_text,
+            ci.color,
             p.id as product_id,
             p.naam as product_name,
             p.price,
+            p.custom_size_price,
             p.image_path,
             pv.id as variant_id,
-            pv.color,
-            pv.size
+            pv.color as variant_color,
+            pv.size,
+            ci.size_display
         FROM cart_items ci
         JOIN products p ON ci.product_id = p.id
         LEFT JOIN product_variants pv ON ci.variant_id = pv.id
@@ -97,6 +103,14 @@ foreach ($cart_items as $item) {
 
 // Calculate total discount amount
 $discount_amount = $original_subtotal - $subtotal;
+
+// Calculate custom size fee
+$custom_size_fee = 0;
+foreach ($cart_items as $item) {
+    if (!empty($item['custom_size_price']) && strpos($item['size_display'] ?? '', 'Custom') === 0) {
+        $custom_size_fee += $item['custom_size_price'] * $item['quantity'];
+    }
+}
 
 // Get shipping settings
 $shipping_is_free = get_setting($pdo, 'shipping_is_free', 'yes');
@@ -236,18 +250,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $item_price = $item['discounted_price'] ?? $item['price'];
                 $order_item_sql = "
                     INSERT INTO order_items (
-                        order_id, product_id, variant_id, 
-                        quantity, price_at_order, personalization_text
-                    ) VALUES (?, ?, ?, ?, ?, ?)
+                        order_id, product_id, variant_id, color,
+                        quantity, price_at_order, personalization_text, size_display
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 ";
                 $order_item_stmt = $pdo->prepare($order_item_sql);
                 $order_item_stmt->execute([
                     $order_id,
                     $item['product_id'],
                     $item['variant_id'],
+                    $item['color'] ?? $item['variant_color'] ?? null,
                     $item['quantity'],
                     $item_price,
-                    $item['personalization_text'] ?? null
+                    $item['personalization_text'] ?? null,
+                    $item['size_display'] ?? null
                 ]);
             }
 
@@ -748,11 +764,12 @@ $countries = [
                                  class="order-item-image">
                             <div class="order-item-details">
                                 <div class="order-item-name"><?= htmlspecialchars($item['product_name']) ?></div>
-                                <?php if ($item['color'] || $item['size']): ?>
+                                <?php if ($item['color'] || $item['size'] || $item['size_display']): ?>
                                     <div class="order-item-variant">
                                         <?php if ($item['color']): ?>Color: <?= htmlspecialchars($item['color']) ?><?php endif; ?>
-                                        <?php if ($item['color'] && $item['size']): ?> • <?php endif; ?>
-                                        <?php if ($item['size']): ?>Size: <?= htmlspecialchars($item['size']) ?><?php endif; ?>
+                                        <?php if ($item['color'] && ($item['size_display'] || $item['size'])): ?> • <?php endif; ?>
+                                        <?php if ($item['size_display']): ?>Size: <?= htmlspecialchars(strpos($item['size_display'], 'Custom') === 0 ? 'Custom Size' : $item['size_display']) ?>
+                                        <?php elseif ($item['size']): ?>Size: <?= htmlspecialchars($item['size']) ?><?php endif; ?>
                                     </div>
                                 <?php endif; ?>
                                 <div class="order-item-qty-price">
@@ -778,6 +795,12 @@ $countries = [
                         <span>Subtotal</span>
                         <span><?= format_price($subtotal) ?></span>
                     </div>
+                    <?php if ($custom_size_fee > 0): ?>
+                    <div class="summary-row">
+                        <span>Custom Size Fee</span>
+                        <span><?= format_price($custom_size_fee) ?></span>
+                    </div>
+                    <?php endif; ?>
                     <div class="summary-row">
                         <span>Shipping</span>
                         <span><?= $shipping_is_free === 'yes' ? 'Free' : format_price($shipping_cost) ?></span>

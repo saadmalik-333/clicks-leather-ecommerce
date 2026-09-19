@@ -94,6 +94,43 @@ foreach ($products as $product) {
     }
 }
 
+// Fetch gallery images for all products (batch query)
+$product_ids = array_column($products, 'id');
+$gallery_images_map = [];
+if (!empty($product_ids)) {
+    $placeholders = implode(',', array_fill(0, count($product_ids), '?'));
+    $gallery_stmt = $pdo->prepare(
+        "SELECT product_id, image_path, sort_order, image_hash 
+         FROM product_images 
+         WHERE product_id IN ($placeholders) 
+         AND media_type = 'image' 
+         ORDER BY product_id, sort_order ASC"
+    );
+    $gallery_stmt->execute($product_ids);
+    $all_gallery_images = $gallery_stmt->fetchAll();
+    
+    // Group by product_id and dedupe against main image (by content hash)
+    foreach ($all_gallery_images as $gallery_img) {
+        $pid = $gallery_img['product_id'];
+        $main_image_hash = null;
+        foreach ($products as $p) {
+            if ($p['id'] == $pid) {
+                $main_image_hash = $p['image_hash'];
+                break;
+            }
+        }
+        // Skip if gallery image hash matches main image hash (same content)
+        // Only treat as duplicate when BOTH hashes are non-null AND equal
+        if ($main_image_hash === null || $gallery_img['image_hash'] === null || $gallery_img['image_hash'] !== $main_image_hash) {
+            // include it — not a confirmed duplicate
+            if (!isset($gallery_images_map[$pid])) {
+                $gallery_images_map[$pid] = [];
+            }
+            $gallery_images_map[$pid][] = $gallery_img['image_path'];
+        }
+    }
+}
+
 // Helper function to check if a filter value is selected
 function is_filter_selected($value, $selected_array) {
     return in_array($value, $selected_array);
@@ -250,15 +287,20 @@ function is_filter_selected($value, $selected_array) {
                         <div class="products-grid">
                             <?php foreach ($products as $product): ?>
                                 <a href="<?= PUBLIC_URL ?>/product-detail.php?id=<?= $product['id'] ?>" class="product-card">
-                                    <div class="product-image <?php echo empty($product['image_path_alt']) ? 'no-alt' : ''; ?>">
-                                        <?php if ($product['image_path']): ?>
-                                            <img src="<?= PUBLIC_URL ?>/uploads/<?= htmlspecialchars($product['image_path']) ?>" alt="<?= htmlspecialchars($product['naam']) ?>" class="product-img-main">
-                                        <?php else: ?>
-                                            <div class="product-img-placeholder product-img-main"></div>
-                                        <?php endif; ?>
-                                        <?php if (!empty($product['image_path_alt'])): ?>
-                                            <img src="<?= PUBLIC_URL ?>/uploads/<?= htmlspecialchars($product['image_path_alt']) ?>" alt="<?= htmlspecialchars($product['naam']) ?> - Alternate" class="product-img-alt">
-                                        <?php endif; ?>
+                                    <div class="product-image">
+                                        <div class="product-image-carousel" data-product-id="<?= $product['id'] ?>">
+                                            <div class="product-image-track">
+                                                <?php if ($product['image_path']): ?>
+                                                    <div class="product-image-slide">
+                                                        <img src="<?= PUBLIC_URL ?>/uploads/<?= htmlspecialchars($product['image_path']) ?>" alt="<?= htmlspecialchars($product['naam']) ?>">
+                                                    </div>
+                                                <?php else: ?>
+                                                    <div class="product-image-slide">
+                                                        <div class="product-img-placeholder"></div>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
                                         <?php if ($product['has_personalization'] === 'yes'): ?>
                                             <span class="personalization-badge">Personalizable</span>
                                         <?php endif; ?>
@@ -321,6 +363,145 @@ function is_filter_selected($value, $selected_array) {
                 }
             });
         });
+
+        // Product Card Image Carousel
+        (function() {
+            const galleryImagesMap = <?= json_encode($gallery_images_map) ?>;
+            
+            document.querySelectorAll('.product-image-carousel').forEach(function(carousel) {
+                const productId = parseInt(carousel.dataset.productId);
+                const track = carousel.querySelector('.product-image-track');
+                const galleryImages = galleryImagesMap[productId] || [];
+                
+                // Add gallery image slides
+                galleryImages.forEach(function(imagePath) {
+                    const slide = document.createElement('div');
+                    slide.className = 'product-image-slide';
+                    slide.innerHTML = `<img src="<?= PUBLIC_URL ?>/uploads/${imagePath}" alt="Gallery image" loading="lazy">`;
+                    track.appendChild(slide);
+                });
+                
+                const slides = track.querySelectorAll('.product-image-slide');
+                let currentIndex = 0;
+                let startX = 0;
+                let isDragging = false;
+                
+                function updateCarousel() {
+                    track.style.transform = `translateX(-${currentIndex * 100}%)`;
+                }
+                
+                // Touch events
+                carousel.addEventListener('touchstart', function(e) {
+                    startX = e.touches[0].clientX;
+                    isDragging = true;
+                });
+                
+                carousel.addEventListener('touchmove', function(e) {
+                    if (!isDragging) return;
+                    const diff = startX - e.touches[0].clientX;
+                    if (Math.abs(diff) > 50) {
+                        if (diff > 0 && currentIndex < slides.length - 1) {
+                            currentIndex++;
+                        } else if (diff < 0 && currentIndex > 0) {
+                            currentIndex--;
+                        }
+                        updateCarousel();
+                        isDragging = false;
+                    }
+                });
+                
+                carousel.addEventListener('touchend', function() {
+                    isDragging = false;
+                });
+                
+                // Wheel event for trackpad two-finger swipe (desktop)
+                let isLocked = false;
+                let lockStartTime = null;
+                let hasSettled = false;
+                let smallDeltaStreak = 0;
+                let gestureEndTimer = null;
+                
+                carousel.addEventListener('wheel', function(e) {
+                    // Only handle horizontal gestures (trackpad two-finger swipe)
+                    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+                        // Prevent default only for horizontal swipes to avoid blocking vertical page scroll
+                        e.preventDefault();
+                        
+                        if (isLocked) {
+                            // Track consecutive small-delta readings to detect genuine settling
+                            if (Math.abs(e.deltaX) <= 3) {
+                                smallDeltaStreak++;
+                                if (smallDeltaStreak >= 3 && !hasSettled) {
+                                    hasSettled = true;
+                                }
+                            } else {
+                                // A real momentum value breaks the streak — wasn't actually settling
+                                smallDeltaStreak = 0;
+                            }
+                            
+                            // If settled and a new large delta arrives (fresh user gesture after settle)
+                            if (hasSettled && Math.abs(e.deltaX) >= 15) {
+                                // Unlock and re-process this event as a fresh gesture
+                                isLocked = false;
+                                lockStartTime = null;
+                                hasSettled = false;
+                                smallDeltaStreak = 0;
+                                clearTimeout(gestureEndTimer);
+                                // Fall through to re-process this event below
+                            } 
+                            // Safety net: absolute max lock duration (3000ms) as fallback
+                            else if (lockStartTime && Date.now() - lockStartTime > 3000) {
+                                isLocked = false;
+                                lockStartTime = null;
+                                hasSettled = false;
+                                smallDeltaStreak = 0;
+                                clearTimeout(gestureEndTimer);
+                                // Fall through to re-process this event below
+                            } 
+                            // Still within a gesture (or its decaying tail) — just extend the quiet timer
+                            else {
+                                clearTimeout(gestureEndTimer);
+                                gestureEndTimer = setTimeout(function() {
+                                    isLocked = false;
+                                    lockStartTime = null;
+                                    hasSettled = false;
+                                    smallDeltaStreak = 0;
+                                }, 150);
+                                return;
+                            }
+                        }
+                        
+                        // Only treat as the START of a genuinely new gesture if the delta is large enough
+                        // (ignores small trailing inertia values that shouldn't trigger a fresh advance)
+                        if (Math.abs(e.deltaX) < 15) {
+                            return; // too small to be a real new swipe — ignore
+                        }
+                        
+                        // First event of a new gesture - advance one slide and lock
+                        isLocked = true;
+                        lockStartTime = Date.now();
+                        hasSettled = false;
+                        smallDeltaStreak = 0;
+                        
+                        // deltaX > 0 = swipe right (next), deltaX < 0 = swipe left (previous)
+                        if (e.deltaX > 0 && currentIndex < slides.length - 1) {
+                            currentIndex++;
+                        } else if (e.deltaX < 0 && currentIndex > 0) {
+                            currentIndex--;
+                        }
+                        updateCarousel();
+                        
+                        // Start "gesture end" timer - will be reset by subsequent events
+                        gestureEndTimer = setTimeout(function() {
+                            isLocked = false;
+                            lockStartTime = null;
+                            hasSettled = false;
+                            smallDeltaStreak = 0;
+                        }, 150);
+                    }
+                }, { passive: false });
+            });
+        })();
     </script>
     </div>
 </body>

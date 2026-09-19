@@ -64,11 +64,18 @@
         items.forEach(item => {
             const variantInfo = [];
             if (item.color) variantInfo.push(`<span>Color:</span> ${item.color}`);
-            if (item.size) variantInfo.push(`<span>Size:</span> ${item.size}`);
+            if (item.size_display) {
+                const displaySize = item.size_display.startsWith('Custom') ? 'Custom Size' : item.size_display;
+                variantInfo.push(`<span>Size:</span> ${displaySize}`);
+            }
+            else if (item.size) variantInfo.push(`<span>Size:</span> ${item.size}`);
             
             // Price display with discount if applicable
             let priceDisplay = '';
-            if (item.discounted_price && item.discounted_price < item.price) {
+            const isCustomSize = item.size_display && item.size_display.startsWith('Custom');
+            
+            if (item.discounted_price && item.discounted_price < item.price && !isCustomSize) {
+                // Show strikethrough + badge only for NON-custom items with real discounts
                 priceDisplay = `
                     <div class="cart-item-price-container">
                         <span class="cart-item-price-original" style="text-decoration: line-through; color: #999; font-size: 0.85rem;">${item.price_formatted}</span>
@@ -77,7 +84,8 @@
                     </div>
                 `;
             } else {
-                priceDisplay = `<div class="cart-item-price">${item.price_formatted}</div>`;
+                // For custom-size items or items without discount, show plain price
+                priceDisplay = `<div class="cart-item-price">${item.discounted_price_formatted || item.price_formatted}</div>`;
             }
             
             html += `
@@ -189,7 +197,7 @@
     }
 
     // Add to cart (for product detail page)
-    async function addToCart(productId, color, size, quantity = 1, personalizationText = '') {
+    async function addToCart(productId, color, size, quantity = 1, personalizationText = '', sizeDisplay = '') {
         try {
             const response = await fetch('cart-add.php', {
                 method: 'POST',
@@ -200,6 +208,7 @@
                     product_id: productId,
                     color: color,
                     size: size,
+                    size_display: sizeDisplay,
                     quantity: quantity,
                     personalization_text: personalizationText
                 })

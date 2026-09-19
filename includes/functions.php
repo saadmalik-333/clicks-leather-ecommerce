@@ -154,14 +154,14 @@ function display_flash_message(): string {
 }
 
 /**
- * Secure image upload
+ * Secure media upload (images and videos)
  * 
  * @param array  $file       The $_FILES['field'] array
  * @param string $upload_dir Target directory (default: uploads/)
- * @param int    $max_size   Max file size in bytes (default: 2MB)
- * @return array ['success' => bool, 'message' => string, 'filename' => string|null]
+ * @param int    $max_size   Max file size in bytes (default: auto-detects 2MB for images, 50MB for videos)
+ * @return array ['success' => bool, 'message' => string, 'filename' => string|null, 'media_type' => string|null, 'image_hash' => string|null]
  */
-function upload_image(array $file, string $upload_dir = '', int $max_size = 2097152): array {
+function upload_media(array $file, string $upload_dir = '', int $max_size = 0): array {
     // Default upload directory
     if (empty($upload_dir)) {
         $upload_dir = UPLOADS_PATH;
@@ -184,42 +184,79 @@ function upload_image(array $file, string $upload_dir = '', int $max_size = 2097
             UPLOAD_ERR_EXTENSION  => 'File upload stopped by extension.',
         ];
         $msg = $error_messages[$file['error']] ?? 'Unknown upload error.';
-        return ['success' => false, 'message' => $msg, 'filename' => null];
+        return ['success' => false, 'message' => $msg, 'filename' => null, 'media_type' => null, 'image_hash' => null];
     }
 
-    // Check file size
-    if ($file['size'] > $max_size) {
-        $max_mb = $max_size / 1048576;
-        return ['success' => false, 'message' => "File size exceeds {$max_mb}MB limit.", 'filename' => null];
-    }
-
-    // Allowed MIME types
-    $allowed_types = ['image/jpeg', 'image/png', 'image/jpg'];
+    // Detect MIME type to determine media type and default max size
     $finfo = new finfo(FILEINFO_MIME_TYPE);
     $mime_type = $finfo->file($file['tmp_name']);
+    
+    // Determine media type and set default max size
+    $image_types = ['image/jpeg', 'image/png', 'image/jpg'];
+    $video_types = ['video/mp4', 'video/webm', 'video/ogg'];
+    
+    if (in_array($mime_type, $image_types)) {
+        $media_type = 'image';
+        $default_max_size = 2097152; // 2MB for images
+    } elseif (in_array($mime_type, $video_types)) {
+        $media_type = 'video';
+        $default_max_size = 52428800; // 50MB for videos
+    } else {
+        return ['success' => false, 'message' => 'Invalid file type. Only JPG, JPEG, PNG, MP4, WebM, and OGG files are allowed.', 'filename' => null, 'media_type' => null, 'image_hash' => null];
+    }
+    
+    // Use provided max_size or default based on media type
+    $actual_max_size = $max_size > 0 ? $max_size : $default_max_size;
 
-    if (!in_array($mime_type, $allowed_types)) {
-        return ['success' => false, 'message' => 'Only JPG, JPEG, and PNG files are allowed.', 'filename' => null];
+    // Check file size
+    if ($file['size'] > $actual_max_size) {
+        $max_mb = $actual_max_size / 1048576;
+        return ['success' => false, 'message' => "File size exceeds {$max_mb}MB limit.", 'filename' => null, 'media_type' => null, 'image_hash' => null];
     }
 
-    // Allowed extensions
-    $allowed_extensions = ['jpg', 'jpeg', 'png'];
+    // Allowed extensions based on media type
+    if ($media_type === 'image') {
+        $allowed_extensions = ['jpg', 'jpeg', 'png'];
+    } else {
+        $allowed_extensions = ['mp4', 'webm', 'ogg'];
+    }
+    
     $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 
     if (!in_array($extension, $allowed_extensions)) {
-        return ['success' => false, 'message' => 'Invalid file extension. Only jpg, jpeg, png allowed.', 'filename' => null];
+        return ['success' => false, 'message' => 'Invalid file extension.', 'filename' => null, 'media_type' => null, 'image_hash' => null];
     }
 
     // Generate unique filename to prevent overwrites
-    $new_filename = uniqid('product_', true) . '.' . $extension;
+    $new_filename = uniqid('media_', true) . '.' . $extension;
     $destination = $upload_dir . '/' . $new_filename;
 
     // Move uploaded file
     if (move_uploaded_file($file['tmp_name'], $destination)) {
-        return ['success' => true, 'message' => 'Image uploaded successfully.', 'filename' => $new_filename];
+        // Compute content hash
+        $image_hash = md5_file($destination);
+        return ['success' => true, 'message' => 'Media uploaded successfully.', 'filename' => $new_filename, 'media_type' => $media_type, 'image_hash' => $image_hash];
     }
 
-    return ['success' => false, 'message' => 'Failed to save uploaded file.', 'filename' => null];
+    return ['success' => false, 'message' => 'Failed to save uploaded file.', 'filename' => null, 'media_type' => null, 'image_hash' => null];
+}
+
+/**
+ * Secure image upload (legacy function for backward compatibility)
+ * 
+ * @param array  $file       The $_FILES['field'] array
+ * @param string $upload_dir Target directory (default: uploads/)
+ * @param int    $max_size   Max file size in bytes (default: 2MB)
+ * @return array ['success' => bool, 'message' => string, 'filename' => string|null]
+ */
+function upload_image(array $file, string $upload_dir = '', int $max_size = 2097152): array {
+    $result = upload_media($file, $upload_dir, $max_size);
+    // Return in old format for backward compatibility
+    return [
+        'success' => $result['success'],
+        'message' => $result['message'],
+        'filename' => $result['filename']
+    ];
 }
 
 /**
@@ -328,8 +365,6 @@ function generate_csrf_token(): string {
  */
 function verify_csrf_token(string $token): bool {
     if (isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token)) {
-        // Regenerate token after successful verification
-        unset($_SESSION['csrf_token']);
         return true;
     }
     return false;

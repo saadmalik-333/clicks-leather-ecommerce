@@ -81,7 +81,7 @@ if ($view_order_id) {
     
     if ($order_detail) {
         $stmt = $pdo->prepare("
-            SELECT oi.*, p.naam as product_name, pv.size, pv.color 
+            SELECT oi.*, p.naam as product_name, p.custom_size_price, pv.size, pv.color as variant_color
             FROM order_items oi 
             LEFT JOIN products p ON oi.product_id = p.id 
             LEFT JOIN product_variants pv ON oi.variant_id = pv.id 
@@ -89,6 +89,16 @@ if ($view_order_id) {
         ");
         $stmt->execute([$view_order_id]);
         $order_items = $stmt->fetchAll();
+        
+        // Calculate custom size fee
+        $custom_size_fee = 0;
+        if ($order_items) {
+            foreach ($order_items as $item) {
+                if (!empty($item['custom_size_price']) && strpos($item['size_display'] ?? '', 'Custom') === 0) {
+                    $custom_size_fee += $item['custom_size_price'] * $item['quantity'];
+                }
+            }
+        }
     }
 }
 ?>
@@ -186,6 +196,33 @@ if ($view_order_id) {
             </div>
         </div>
 
+        <?php 
+        // Check if any items have custom size
+        $has_custom_items = false;
+        if ($order_items) {
+            foreach ($order_items as $item) {
+                if ($item['size_display'] && strpos($item['size_display'], 'Custom') === 0) {
+                    $has_custom_items = true;
+                    break;
+                }
+            }
+        }
+        if ($has_custom_items): 
+        ?>
+            <!-- Custom Measurements -->
+            <div class="order-detail-card">
+                <h4 class="card-title">Custom Measurements</h4>
+                <?php foreach ($order_items as $item): ?>
+                    <?php if ($item['size_display'] && strpos($item['size_display'], 'Custom') === 0): ?>
+                        <div class="detail-row detail-row--stacked">
+                            <span class="detail-label"><?= htmlspecialchars($item['product_name']) ?>:</span>
+                            <span class="detail-value"><?= htmlspecialchars($item['size_display']) ?></span>
+                        </div>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+
         <!-- Update Status -->
         <div class="order-detail-card" style="margin-top: 1.5rem;">
             <h4 class="card-title">Update Order Status</h4>
@@ -230,8 +267,14 @@ if ($view_order_id) {
                                 <tr>
                                     <td><?= htmlspecialchars($item['product_name'] ?? 'N/A') ?></td>
                                     <td>
-                                        <?= htmlspecialchars($item['color'] ?? 'N/A') ?>
-                                        <?php if ($item['size']): ?>
+                                        <?= htmlspecialchars($item['color'] ?? $item['variant_color'] ?? 'N/A') ?>
+                                        <?php if ($item['size_display']): ?>
+                                            <?php if (strpos($item['size_display'], 'Custom') === 0): ?>
+                                                / Custom Size
+                                            <?php else: ?>
+                                                / <?= htmlspecialchars($item['size_display']) ?>
+                                            <?php endif; ?>
+                                        <?php elseif ($item['size']): ?>
                                             / <?= htmlspecialchars($item['size']) ?>
                                         <?php endif; ?>
                                     </td>
@@ -256,6 +299,12 @@ if ($view_order_id) {
                         <span style="color: var(--text-muted);">Subtotal</span>
                         <span><?= format_price(array_sum(array_map(fn($item) => $item['price_at_order'] * $item['quantity'], $order_items)) + $order_detail['discount_amount']) ?></span>
                     </div>
+                    <?php if ($custom_size_fee > 0): ?>
+                    <div class="summary-row" style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span style="color: var(--text-muted);">Custom Size Fee</span>
+                        <span><?= format_price($custom_size_fee) ?></span>
+                    </div>
+                    <?php endif; ?>
                     <div class="summary-row" style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                         <span style="color: var(--text-muted);">Shipping</span>
                         <span><?= format_price($order_detail['shipping_cost']) ?></span>

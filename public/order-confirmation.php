@@ -42,8 +42,10 @@ $items_stmt = $pdo->prepare("
         oi.*,
         p.naam as product_name,
         p.image_path,
+        p.custom_size_price,
         pv.color,
-        pv.size
+        pv.size,
+        oi.size_display
     FROM order_items oi
     JOIN products p ON oi.product_id = p.id
     LEFT JOIN product_variants pv ON oi.variant_id = pv.id
@@ -55,6 +57,14 @@ $order_items = $items_stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Calculate item count (total quantity)
 $total_items = array_sum(array_column($order_items, 'quantity'));
+
+// Calculate custom size fee
+$custom_size_fee = 0;
+foreach ($order_items as $item) {
+    if (!empty($item['custom_size_price']) && strpos($item['size_display'] ?? '', 'Custom') === 0) {
+        $custom_size_fee += $item['custom_size_price'] * $item['quantity'];
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -304,11 +314,12 @@ $total_items = array_sum(array_column($order_items, 'quantity'));
                          class="order-item-image">
                     <div class="order-item-details">
                         <div class="order-item-name"><?= htmlspecialchars($item['product_name']) ?></div>
-                        <?php if ($item['color'] || $item['size']): ?>
+                        <?php if ($item['color'] || $item['size'] || $item['size_display']): ?>
                             <div class="order-item-variant">
                                 <?php if ($item['color']): ?>Color: <?= htmlspecialchars($item['color']) ?><?php endif; ?>
-                                <?php if ($item['color'] && $item['size']): ?> • <?php endif; ?>
-                                <?php if ($item['size']): ?>Size: <?= htmlspecialchars($item['size']) ?><?php endif; ?>
+                                <?php if ($item['color'] && ($item['size_display'] || $item['size'])): ?> • <?php endif; ?>
+                                <?php if ($item['size_display']): ?>Size: <?= htmlspecialchars(strpos($item['size_display'], 'Custom') === 0 ? 'Custom Size' : $item['size_display']) ?>
+                                <?php elseif ($item['size']): ?>Size: <?= htmlspecialchars($item['size']) ?><?php endif; ?>
                             </div>
                         <?php endif; ?>
                         <div class="order-item-qty-price">
@@ -329,6 +340,12 @@ $total_items = array_sum(array_column($order_items, 'quantity'));
                 <span>Subtotal (<?= $total_items ?> item<?= $total_items !== 1 ? 's' : '' ?>)</span>
                 <span><?= format_price($order['total_amount'] - $order['shipping_cost'] + $order['discount_amount']) ?></span>
             </div>
+            <?php if ($custom_size_fee > 0): ?>
+            <div class="summary-row">
+                <span>Custom Size Fee</span>
+                <span><?= format_price($custom_size_fee) ?></span>
+            </div>
+            <?php endif; ?>
             <div class="summary-row">
                 <span>Shipping (<?= ucfirst($order['shipping_method']) ?>)</span>
                 <span><?= format_price($order['shipping_cost']) ?></span>
