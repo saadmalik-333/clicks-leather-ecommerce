@@ -333,23 +333,85 @@ window.removeGalleryImage = function(btn) {
     }, 200);
 };
 
-let colorImageCounter = 0;
+let colorGroupCounter = 0;
 
-window.addColorImageRow = function() {
+// Get the highest existing group index from PHP-rendered groups
+function getMaxGroupIndex() {
     const container = document.getElementById('color-images-container');
+    if (!container) return -1;
+    
+    let maxIndex = -1;
+    container.querySelectorAll('.color-group').forEach(group => {
+        const index = parseInt(group.dataset.groupIndex);
+        if (!isNaN(index) && index > maxIndex) {
+            maxIndex = index;
+        }
+    });
+    return maxIndex;
+}
 
+window.addColorGroup = function() {
+    const container = document.getElementById('color-images-container');
     if (!container) {
         console.error('Color images container not found');
         return;
     }
+    
+    const nextIndex = getMaxGroupIndex() + 1;
+    
+    const group = document.createElement('div');
+    group.className = 'color-group';
+    group.dataset.groupIndex = nextIndex;
+    group.style.cssText = 'border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: var(--space-md); background: var(--bg-card);';
+    group.innerHTML = `
+        <div class="color-group-header" style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-sm);">
+            <input type="text" name="color_group_name[]" placeholder="Color" style="flex: 1; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+            <button type="button" class="btn btn-outline btn-sm" onclick="removeColorGroup(this)" style="color: var(--color-error); border-color: var(--color-error);">Remove Color</button>
+        </div>
+        <div class="color-group-images" style="display: flex; flex-wrap: wrap; gap: var(--space-sm);">
+            <!-- Initial image slot -->
+            <div class="color-group-image" style="position: relative; display: inline-block;">
+                <label style="cursor: pointer; display: block;">
+                    <input type="file" name="color_group_images[${nextIndex}][]" accept=".jpg,.jpeg,.png,.mp4,.webm,.ogg" style="display: none;" onchange="previewColorImage(this)">
+                    <div style="width: 80px; height: 80px; border: 2px dashed var(--border-color); border-radius: var(--radius-sm); display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg-muted);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                            <circle cx="12" cy="13" r="4"/>
+                        </svg>
+                        <span style="font-size: 0.7rem; color: var(--text-muted); margin-top: 4px;">Add Image</span>
+                    </div>
+                </label>
+                <input type="hidden" name="color_group_existing_id[${nextIndex}][]" value="">
+                <button type="button" class="btn-remove-variant" onclick="removeImage(this)" title="Remove" style="position: absolute; top: -8px; right: -8px;">×</button>
+            </div>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="addImageToGroup(this)" style="margin-top: var(--space-sm);">+ Add Image</button>
+    `;
+    
+    container.appendChild(group);
+    colorGroupCounter++;
+};
 
-    const card = document.createElement('div');
-    card.className = 'color-image-card';
-    card.id = 'color-image-card-' + colorImageCounter;
-    card.style.cssText = 'display: inline-block; position: relative;';
-    card.innerHTML = `
+window.addImageToGroup = function(button) {
+    const group = button.closest('.color-group');
+    if (!group) {
+        console.error('Parent color group not found');
+        return;
+    }
+    
+    const groupIndex = group.dataset.groupIndex;
+    const imagesContainer = group.querySelector('.color-group-images');
+    if (!imagesContainer) {
+        console.error('Images container not found');
+        return;
+    }
+    
+    const imageDiv = document.createElement('div');
+    imageDiv.className = 'color-group-image';
+    imageDiv.style.cssText = 'position: relative; display: inline-block;';
+    imageDiv.innerHTML = `
         <label style="cursor: pointer; display: block;">
-            <input type="file" name="color_image_file[]" accept=".jpg,.jpeg,.png" style="display: none;" onchange="previewColorImage(this)">
+            <input type="file" name="color_group_images[${groupIndex}][]" accept=".jpg,.jpeg,.png,.mp4,.webm,.ogg" style="display: none;" onchange="previewColorImage(this)">
             <div style="width: 80px; height: 80px; border: 2px dashed var(--border-color); border-radius: var(--radius-sm); display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg-muted);">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2">
                     <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
@@ -358,28 +420,44 @@ window.addColorImageRow = function() {
                 <span style="font-size: 0.7rem; color: var(--text-muted); margin-top: 4px;">Add Image</span>
             </div>
         </label>
-        <input type="text" name="color_image_color[]" placeholder="Color" style="width: 80px; font-size: 0.75rem; margin-top: var(--space-xs); padding: 4px;">
-        <input type="hidden" name="color_image_id[]" value="">
-        <label style="display: block; font-size: 0.75rem; margin-top: var(--space-xs);">
-            <input type="checkbox" name="color_image_remove[]" value=""> Remove
-        </label>
-        <button type="button" class="btn-remove-variant" onclick="removeColorImageRow(this)" title="Remove" style="position: absolute; top: -8px; right: -8px;">×</button>
+        <input type="hidden" name="color_group_existing_id[${groupIndex}][]" value="">
+        <button type="button" class="btn-remove-variant" onclick="removeImage(this)" title="Remove" style="position: absolute; top: -8px; right: -8px;">×</button>
     `;
+    
+    imagesContainer.appendChild(imageDiv);
+};
 
-    container.appendChild(card);
-    colorImageCounter++;
+window.removeColorGroup = function(button) {
+    const group = button.closest('.color-group');
+    if (group) {
+        group.remove();
+    }
+};
+
+window.removeImage = function(button) {
+    const imageDiv = button.closest('.color-group-image');
+    if (imageDiv) {
+        imageDiv.remove();
+    }
 };
 
 window.previewColorImage = function(input) {
     if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
+        const file = input.files[0];
+        const isVideo = file.type.startsWith('video/');
+        
+        if (isVideo) {
+            // For video files, just show a placeholder with video icon
             const label = input.parentElement;
             const placeholder = label.querySelector('div');
             if (placeholder) {
                 placeholder.outerHTML = `
                     <div style="position: relative; width: 80px; height: 80px;">
-                        <img src="${e.target.result}" alt="Color image" style="width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                        <div style="width: 80px; height: 80px; background: var(--bg-muted); border-radius: var(--radius-sm); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center;">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2">
+                                <polygon points="5,3 19,12 5,21"/>
+                            </svg>
+                        </div>
                         <div style="position: absolute; bottom: 4px; right: 4px; background: rgba(0,0,0,0.6); border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
                                 <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
@@ -389,14 +467,27 @@ window.previewColorImage = function(input) {
                     </div>
                 `;
             }
-        };
-        reader.readAsDataURL(input.files[0]);
-    }
-};
-
-window.removeColorImageRow = function(button) {
-    const card = button.closest('.color-image-card');
-    if (card) {
-        card.remove();
+        } else {
+            // For image files, show preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const label = input.parentElement;
+                const placeholder = label.querySelector('div');
+                if (placeholder) {
+                    placeholder.outerHTML = `
+                        <div style="position: relative; width: 80px; height: 80px;">
+                            <img src="${e.target.result}" alt="Color image" style="width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                            <div style="position: absolute; bottom: 4px; right: 4px; background: rgba(0,0,0,0.6); border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                                    <circle cx="12" cy="13" r="4"/>
+                                </svg>
+                            </div>
+                        </div>
+                    `;
+                }
+            };
+            reader.readAsDataURL(file);
+        }
     }
 };

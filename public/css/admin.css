@@ -870,6 +870,16 @@
         font-size: 0.8rem;
     }
 
+    .form-actions {
+        flex-direction: column;
+        gap: var(--space-sm);
+    }
+
+    .form-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
     .data-table th,
     .data-table td {
         padding: 0.5rem 0.5rem;

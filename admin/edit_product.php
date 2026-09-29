@@ -30,9 +30,19 @@ $stmt->execute([':product_id' => $product_id]);
 $variants = $stmt->fetchAll();
 
 // Fetch color images for this product
-$color_images_stmt = $pdo->prepare("SELECT * FROM product_color_images WHERE product_id = :product_id ORDER BY color ASC");
+$color_images_stmt = $pdo->prepare("SELECT * FROM product_color_images WHERE product_id = :product_id ORDER BY id ASC");
 $color_images_stmt->execute([':product_id' => $product_id]);
 $color_images = $color_images_stmt->fetchAll();
+
+// Group by color
+$color_image_groups = [];
+foreach ($color_images as $img) {
+    $color_lower = strtolower($img['color']);
+    if (!isset($color_image_groups[$color_lower])) {
+        $color_image_groups[$color_lower] = [];
+    }
+    $color_image_groups[$color_lower][] = $img;
+}
 
 // Fetch description images for this product
 $description_images_stmt = $pdo->prepare("SELECT * FROM product_description_images WHERE product_id = :product_id ORDER BY sort_order ASC");
@@ -281,78 +291,106 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Handle color images
                 // FIRST: Fetch existing color images into memory before deleting
-                $existing_color_images_stmt = $pdo->prepare("SELECT id, color, image_path FROM product_color_images WHERE product_id = :product_id");
+                $existing_color_images_stmt = $pdo->prepare("SELECT id, color, image_path, media_type, sort_order FROM product_color_images WHERE product_id = :product_id ORDER BY id ASC");
                 $existing_color_images_stmt->execute([':product_id' => $product_id]);
                 $existing_color_images_map = [];
                 foreach ($existing_color_images_stmt->fetchAll() as $existing) {
-                    $existing_color_images_map[$existing['id']] = $existing['image_path'];
+                    $existing_color_images_map[$existing['id']] = [
+                        'color' => $existing['color'],
+                        'image_path' => $existing['image_path'],
+                        'media_type' => $existing['media_type'],
+                        'sort_order' => $existing['sort_order']
+                    ];
                 }
 
                 // THEN: Delete all existing color images for this product
                 $pdo->prepare("DELETE FROM product_color_images WHERE product_id = :product_id")->execute([':product_id' => $product_id]);
 
-                // Process color image submissions
-                if (isset($_POST['color_image_color']) && is_array($_POST['color_image_color'])) {
-                    // Build color-image array with dedup (last entry wins per color)
-                    $color_image_data = [];
-                    
-                    foreach ($_POST['color_image_color'] as $key => $color_name) {
-                        $color_name = trim($color_name);
+                // Process color groups
+                if (isset($_POST['color_group_name']) && is_array($_POST['color_group_name'])) {
+                    foreach ($_POST['color_group_name'] as $groupIndex => $colorName) {
+                        $colorName = trim($colorName);
+                        if (empty($colorName)) continue;
                         
-                        // Skip if color name is empty
-                        if (empty($color_name)) {
-                            continue;
-                        }
-                        
-                        // Check if this row is marked for removal
-                        if (isset($_POST['color_image_remove']) && is_array($_POST['color_image_remove']) && in_array($_POST['color_image_id'][$key] ?? '', $_POST['color_image_remove'])) {
-                            continue;
-                        }
-                        
-                        // Check if a new file was uploaded
-                        $image_path = null;
-                        if (isset($_FILES['color_image_file']['name'][$key]) && $_FILES['color_image_file']['error'][$key] === UPLOAD_ERR_OK) {
-                            $file = [
-                                'name' => $_FILES['color_image_file']['name'][$key],
-                                'type' => $_FILES['color_image_file']['type'][$key],
-                                'tmp_name' => $_FILES['color_image_file']['tmp_name'][$key],
-                                'error' => $_FILES['color_image_file']['error'][$key],
-                                'size' => $_FILES['color_image_file']['size'][$key]
-                            ];
-                            $upload_result = upload_media($file);
-                            if ($upload_result['success']) {
-                                $image_path = $upload_result['filename'];
-                            } else {
-                                $errors[] = 'Color image (' . htmlspecialchars($color_name) . '): ' . $upload_result['message'];
+                        // Process images in this color group
+                        if (isset($_FILES['color_group_images']['name'][$groupIndex])) {
+                            $sortOrder = 0;
+                            $fileCount = count($_FILES['color_group_images']['name'][$groupIndex]);
+                            
+                            for ($imgIndex = 0; $imgIndex < $fileCount; $imgIndex++) {
+                                $existing_id = $_POST['color_group_existing_id'][$groupIndex][$imgIndex] ?? '';
+                                
+                                // Check if this image is marked for removal
+                                $remove_key = $groupIndex . '_' . $imgIndex;
+                                if (isset($_POST['color_group_remove']) && is_array($_POST['color_group_remove']) && in_array($remove_key, $_POST['color_group_remove'])) {
+                                    continue; // Case: marked for removal - skip
+                                }
+                                
+                                $image_path = null;
+                                $media_type = null;
+                                
+                                // Case 1: Existing image with new file upload (replace)
+                                if (!empty($existing_id) && $_FILES['color_group_images']['error'][$groupIndex][$imgIndex] === UPLOAD_ERR_OK) {
+                                    $file = [
+                                        'name' => $_FILES['color_group_images']['name'][$groupIndex][$imgIndex],
+                                        'type' => $_FILES['color_group_images']['type'][$groupIndex][$imgIndex],
+                                        'tmp_name' => $_FILES['color_group_images']['tmp_name'][$groupIndex][$imgIndex],
+                                        'error' => $_FILES['color_group_images']['error'][$groupIndex][$imgIndex],
+                                        'size' => $_FILES['color_group_images']['size'][$groupIndex][$imgIndex]
+                                    ];
+                                    $upload_result = upload_media($file);
+                                    if ($upload_result['success']) {
+                                        $image_path = $upload_result['filename'];
+                                        $media_type = $upload_result['media_type'];
+                                    } else {
+                                        $errors[] = 'Color image (' . htmlspecialchars($colorName) . '): ' . $upload_result['message'];
+                                        continue;
+                                    }
+                                }
+                                // Case 2: Existing image, no new file (keep as-is)
+                                elseif (!empty($existing_id) && isset($existing_color_images_map[$existing_id])) {
+                                    $image_path = $existing_color_images_map[$existing_id]['image_path'];
+                                    $media_type = $existing_color_images_map[$existing_id]['media_type'];
+                                }
+                                // Case 3: New image slot with file upload (insert new)
+                                elseif (empty($existing_id) && $_FILES['color_group_images']['error'][$groupIndex][$imgIndex] === UPLOAD_ERR_OK) {
+                                    $file = [
+                                        'name' => $_FILES['color_group_images']['name'][$groupIndex][$imgIndex],
+                                        'type' => $_FILES['color_group_images']['type'][$groupIndex][$imgIndex],
+                                        'tmp_name' => $_FILES['color_group_images']['tmp_name'][$groupIndex][$imgIndex],
+                                        'error' => $_FILES['color_group_images']['error'][$groupIndex][$imgIndex],
+                                        'size' => $_FILES['color_group_images']['size'][$groupIndex][$imgIndex]
+                                    ];
+                                    $upload_result = upload_media($file);
+                                    if ($upload_result['success']) {
+                                        $image_path = $upload_result['filename'];
+                                        $media_type = $upload_result['media_type'];
+                                    } else {
+                                        $errors[] = 'Color image (' . htmlspecialchars($colorName) . '): ' . $upload_result['message'];
+                                        continue;
+                                    }
+                                }
+                                // Case 4: New image slot with no file (skip - empty placeholder)
+                                else {
+                                    continue;
+                                }
+                                
+                                // Insert if we have an image path
+                                if ($image_path) {
+                                    $insert_stmt = $pdo->prepare("
+                                        INSERT INTO product_color_images (product_id, color, image_path, media_type, sort_order)
+                                        VALUES (:product_id, :color, :image_path, :media_type, :sort_order)
+                                    ");
+                                    $insert_stmt->execute([
+                                        ':product_id' => $product_id,
+                                        ':color' => strtolower($colorName),
+                                        ':image_path' => $image_path,
+                                        ':media_type' => $media_type,
+                                        ':sort_order' => $sortOrder++
+                                    ]);
+                                }
                             }
-                        } else {
-                            // Keep existing image from in-memory map if no new file uploaded
-                            $existing_id = $_POST['color_image_id'][$key] ?? '';
-                            if (!empty($existing_id) && isset($existing_color_images_map[$existing_id])) {
-                                $image_path = $existing_color_images_map[$existing_id];
-                            }
                         }
-                        
-                        // Only add if we have an image path
-                        if ($image_path) {
-                            // Store color in lowercase for case-insensitive matching
-                            $color_lower = strtolower($color_name);
-                            // Dedup: last entry wins (overwrite if same color)
-                            $color_image_data[$color_lower] = $image_path;
-                        }
-                    }
-                    
-                    // Insert deduplicated color images
-                    foreach ($color_image_data as $color => $image_path) {
-                        $insert_stmt = $pdo->prepare("
-                            INSERT INTO product_color_images (product_id, color, image_path)
-                            VALUES (:product_id, :color, :image_path)
-                        ");
-                        $insert_stmt->execute([
-                            ':product_id' => $product_id,
-                            ':color' => $color,
-                            ':image_path' => $image_path
-                        ]);
                     }
                 }
 
@@ -686,53 +724,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_review_visibil
             </div>
 
             <h3 class="form-section-title" style="margin-top: var(--space-xl);">Color Images</h3>
-            <p class="form-hint">Assign a main image for each color. These images will be shown when a customer selects that color on the product detail page.</p>
+            <p class="form-hint">Assign multiple images for each color. These images will be shown when a customer selects that color on the product detail page.</p>
 
-            <div id="color-images-container" style="display: flex; flex-wrap: wrap; gap: var(--space-md);">
-                <?php if (!empty($color_images)): ?>
-                    <?php foreach ($color_images as $i => $color_img): ?>
-                        <div class="color-image-card" id="color-image-card-<?= $i ?>" style="display: inline-block; position: relative;">
-                            <label style="cursor: pointer; display: block;">
-                                <input type="file" name="color_image_file[]" accept=".jpg,.jpeg,.png" style="display: none;" onchange="previewColorImage(this)">
-                                <?php if ($color_img['image_path']): ?>
-                                    <div style="position: relative; width: 80px; height: 80px;">
-                                        <img src="<?= PUBLIC_URL ?>/uploads/<?= htmlspecialchars($color_img['image_path']) ?>" 
-                                             alt="Color image" 
-                                             style="width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
-                                        <div style="position: absolute; bottom: 4px; right: 4px; background: rgba(0,0,0,0.6); border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                                                <circle cx="12" cy="13" r="4"/>
-                                            </svg>
-                                        </div>
+            <div id="color-images-container" style="display: flex; flex-direction: column; gap: var(--space-md);">
+                <?php if (!empty($color_image_groups)): ?>
+                    <?php $groupIndex = 0; ?>
+                    <?php foreach ($color_image_groups as $color => $images): ?>
+                        <div class="color-group" data-group-index="<?= $groupIndex ?>" style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: var(--space-md); background: var(--bg-card);">
+                            <div class="color-group-header" style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-sm);">
+                                <input type="text" name="color_group_name[]" value="<?= htmlspecialchars($color) ?>" placeholder="Color" style="flex: 1; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+                                <button type="button" class="btn btn-outline btn-sm" onclick="removeColorGroup(this)" style="color: var(--color-error); border-color: var(--color-error);">Remove Color</button>
+                            </div>
+                            <div class="color-group-images" style="display: flex; flex-wrap: wrap; gap: var(--space-sm);">
+                                <?php foreach ($images as $imgIndex => $img): ?>
+                                    <div class="color-group-image" style="position: relative; display: inline-block;">
+                                        <label style="cursor: pointer; display: block;">
+                                            <input type="file" name="color_group_images[<?= $groupIndex ?>][]" accept=".jpg,.jpeg,.png,.mp4,.webm,.ogg" style="display: none;" onchange="previewColorImage(this)">
+                                            <?php if ($img['image_path']): ?>
+                                                <div style="position: relative; width: 80px; height: 80px;">
+                                                    <?php if (($img['media_type'] ?? 'image') === 'video'): ?>
+                                                        <video src="<?= PUBLIC_URL ?>/uploads/<?= htmlspecialchars($img['image_path']) ?>" 
+                                                               style="width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-color);"
+                                                               muted playsinline preload="metadata"></video>
+                                                    <?php else: ?>
+                                                        <img src="<?= PUBLIC_URL ?>/uploads/<?= htmlspecialchars($img['image_path']) ?>" 
+                                                             alt="Color image" 
+                                                             style="width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                                                    <?php endif; ?>
+                                                    <div style="position: absolute; bottom: 4px; right: 4px; background: rgba(0,0,0,0.6); border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                                                            <circle cx="12" cy="13" r="4"/>
+                                                        </svg>
+                                                    </div>
+                                                </div>
+                                            <?php else: ?>
+                                                <div style="width: 80px; height: 80px; border: 2px dashed var(--border-color); border-radius: var(--radius-sm); display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg-muted);">
+                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2">
+                                                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                                                        <circle cx="12" cy="13" r="4"/>
+                                                    </svg>
+                                                    <span style="font-size: 0.7rem; color: var(--text-muted); margin-top: 4px;">Add Image</span>
+                                                </div>
+                                            <?php endif; ?>
+                                        </label>
+                                        <input type="hidden" name="color_group_existing_id[<?= $groupIndex ?>][]" value="<?= $img['id'] ?>">
+                                        <label style="display: block; font-size: 0.75rem; margin-top: var(--space-xs);">
+                                            <input type="checkbox" name="color_group_remove[]" value="<?= $groupIndex ?>_<?= $imgIndex ?>"> Remove
+                                        </label>
+                                        <button type="button" class="btn-remove-variant" onclick="removeImage(this)" title="Remove" style="position: absolute; top: -8px; right: -8px;">×</button>
                                     </div>
-                                <?php else: ?>
-                                    <div style="width: 80px; height: 80px; border: 2px dashed var(--border-color); border-radius: var(--radius-sm); display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg-muted);">
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2">
-                                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                                            <circle cx="12" cy="13" r="4"/>
-                                        </svg>
-                                        <span style="font-size: 0.7rem; color: var(--text-muted); margin-top: 4px;">Add Image</span>
-                                    </div>
-                                <?php endif; ?>
-                            </label>
-                            <input type="text" name="color_image_color[]" 
-                                   value="<?= htmlspecialchars($color_img['color']) ?>" 
-                                   placeholder="Color" 
-                                   style="width: 80px; font-size: 0.75rem; margin-top: var(--space-xs); padding: 4px;">
-                            <input type="hidden" name="color_image_id[]" value="<?= $color_img['id'] ?>">
-                            <label style="display: block; font-size: 0.75rem; margin-top: var(--space-xs);">
-                                <input type="checkbox" name="color_image_remove[]" value="<?= $color_img['id'] ?>"> Remove
-                            </label>
-                            <button type="button" class="btn-remove-variant" onclick="removeColorImageRow(this)" title="Remove" style="position: absolute; top: -8px; right: -8px;">×</button>
+                                <?php endforeach; ?>
+                            </div>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="addImageToGroup(this)" style="margin-top: var(--space-sm);">+ Add Image</button>
                         </div>
+                        <?php $groupIndex++; ?>
                     <?php endforeach; ?>
                 <?php endif; ?>
             </div>
 
-            <button type="button" class="btn btn-outline btn-sm" id="add-color-image-btn" onclick="addColorImageRow()">
-                + Add Another Color Image
-            </button>
+            <button type="button" class="btn btn-outline btn-sm" id="add-color-group-btn" onclick="addColorGroup()">+ Add Another Color</button>
 
             <h3 class="form-section-title" style="margin-top: var(--space-xl);">Description Images</h3>
             <p class="form-hint">Up to 5 additional images shown at the end of the product description.</p>

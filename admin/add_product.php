@@ -157,53 +157,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 // Handle color images
-                if (isset($_POST['color_image_color']) && is_array($_POST['color_image_color'])) {
-                    // Build color-image array
-                    $color_image_data = [];
-                    foreach ($_POST['color_image_color'] as $key => $color_name) {
-                        $color_name = trim($color_name);
+                if (isset($_POST['color_group_name']) && is_array($_POST['color_group_name'])) {
+                    foreach ($_POST['color_group_name'] as $groupIndex => $colorName) {
+                        $colorName = trim($colorName);
+                        if (empty($colorName)) continue;
                         
-                        // Skip if color name is empty
-                        if (empty($color_name)) {
-                            continue;
-                        }
-                        
-                        // Check if a new file was uploaded
-                        $image_path = null;
-                        if (isset($_FILES['color_image_file']['name'][$key]) && $_FILES['color_image_file']['error'][$key] === UPLOAD_ERR_OK) {
-                            $file = [
-                                'name' => $_FILES['color_image_file']['name'][$key],
-                                'type' => $_FILES['color_image_file']['type'][$key],
-                                'tmp_name' => $_FILES['color_image_file']['tmp_name'][$key],
-                                'error' => $_FILES['color_image_file']['error'][$key],
-                                'size' => $_FILES['color_image_file']['size'][$key]
-                            ];
-                            $upload_result = upload_media($file);
-                            if ($upload_result['success']) {
-                                $image_path = $upload_result['filename'];
-                            } else {
-                                $errors[] = 'Color image (' . htmlspecialchars($color_name) . '): ' . $upload_result['message'];
+                        // Process images in this color group
+                        if (isset($_FILES['color_group_images']['name'][$groupIndex])) {
+                            $sortOrder = 0;
+                            $fileCount = count($_FILES['color_group_images']['name'][$groupIndex]);
+                            
+                            for ($imgIndex = 0; $imgIndex < $fileCount; $imgIndex++) {
+                                if ($_FILES['color_group_images']['error'][$groupIndex][$imgIndex] === UPLOAD_ERR_OK) {
+                                    $file = [
+                                        'name' => $_FILES['color_group_images']['name'][$groupIndex][$imgIndex],
+                                        'type' => $_FILES['color_group_images']['type'][$groupIndex][$imgIndex],
+                                        'tmp_name' => $_FILES['color_group_images']['tmp_name'][$groupIndex][$imgIndex],
+                                        'error' => $_FILES['color_group_images']['error'][$groupIndex][$imgIndex],
+                                        'size' => $_FILES['color_group_images']['size'][$groupIndex][$imgIndex]
+                                    ];
+                                    $upload_result = upload_media($file);
+                                    if ($upload_result['success']) {
+                                        $insert_stmt = $pdo->prepare("
+                                            INSERT INTO product_color_images (product_id, color, image_path, media_type, sort_order)
+                                            VALUES (:product_id, :color, :image_path, :media_type, :sort_order)
+                                        ");
+                                        $insert_stmt->execute([
+                                            ':product_id' => $product_id,
+                                            ':color' => strtolower($colorName),
+                                            ':image_path' => $upload_result['filename'],
+                                            ':media_type' => $upload_result['media_type'],
+                                            ':sort_order' => $sortOrder++
+                                        ]);
+                                    } else {
+                                        $errors[] = 'Color image (' . htmlspecialchars($colorName) . '): ' . $upload_result['message'];
+                                    }
+                                }
                             }
                         }
-                        
-                        // Only add if we have an image path
-                        if ($image_path) {
-                            $color_lower = strtolower($color_name);
-                            $color_image_data[$color_lower] = $image_path;
-                        }
-                    }
-                    
-                    // Deduplicate: last entry wins (in-memory dedup by color key)
-                    foreach ($color_image_data as $color => $image_path) {
-                        $insert_stmt = $pdo->prepare("
-                            INSERT INTO product_color_images (product_id, color, image_path)
-                            VALUES (:product_id, :color, :image_path)
-                        ");
-                        $insert_stmt->execute([
-                            ':product_id' => $product_id,
-                            ':color' => $color,
-                            ':image_path' => $image_path
-                        ]);
                     }
                 }
 
@@ -428,15 +419,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <h3 class="form-section-title" style="margin-top: var(--space-xl);">Color Images</h3>
-            <p class="form-hint">Assign a main image for each color. These images will be shown when a customer selects that color on the product detail page.</p>
+            <p class="form-hint">Assign multiple images for each color. These images will be shown when a customer selects that color on the product detail page.</p>
 
-            <div id="color-images-container" style="display: flex; flex-wrap: wrap; gap: var(--space-md);">
-                <!-- Color image cards will be added here dynamically -->
+            <div id="color-images-container" style="display: flex; flex-direction: column; gap: var(--space-md);">
+                <!-- Color groups will be added here dynamically -->
             </div>
 
-            <button type="button" class="btn btn-outline btn-sm" id="add-color-image-btn" onclick="addColorImageRow()">
-                + Add Another Color Image
-            </button>
+            <button type="button" class="btn btn-outline btn-sm" id="add-color-group-btn" onclick="addColorGroup()">+ Add Another Color</button>
 
             <h3 class="form-section-title" style="margin-top: var(--space-xl);">Description Images</h3>
             <p class="form-hint">Up to 5 additional images shown at the end of the product description.</p>

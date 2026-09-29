@@ -2106,13 +2106,7 @@ textarea {
 }
 
 .gallery-thumbnails {
-    display: flex;
-    gap: var(--space-sm);
-    padding: var(--space-md);
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-top: none;
-    border-radius: 0 0 var(--radius-md) var(--radius-md);
+    display: none;
 }
 
 .thumbnail {
@@ -2241,6 +2235,12 @@ textarea {
     background: var(--bg-card);
     border-color: var(--border-color);
     color: var(--text-secondary);
+}
+
+.gallery-nav.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 .product-detail-description {

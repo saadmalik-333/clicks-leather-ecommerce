@@ -99,14 +99,21 @@ $gallery_stmt->execute([':product_id' => $product_id]);
 $gallery_images = $gallery_stmt->fetchAll();
 
 // Fetch color images for this product
-$color_images_stmt = $pdo->prepare("SELECT color, image_path FROM product_color_images WHERE product_id = :product_id");
+$color_images_stmt = $pdo->prepare("SELECT color, image_path, media_type, sort_order FROM product_color_images WHERE product_id = :product_id ORDER BY id ASC");
 $color_images_stmt->execute([':product_id' => $product_id]);
 $color_images = $color_images_stmt->fetchAll();
 
-// Build color-to-image lookup object (case-insensitive: keys stored in lowercase)
-$color_image_lookup = [];
+// Group by color
+$color_image_groups = [];
 foreach ($color_images as $img) {
-    $color_image_lookup[strtolower($img['color'])] = $img['image_path'];
+    $color_lower = strtolower($img['color']);
+    if (!isset($color_image_groups[$color_lower])) {
+        $color_image_groups[$color_lower] = [];
+    }
+    $color_image_groups[$color_lower][] = [
+        'image_path' => $img['image_path'],
+        'media_type' => $img['media_type']
+    ];
 }
 
 // Fetch variants with stock
@@ -172,7 +179,7 @@ $related_stmt = $pdo->prepare("
     WHERE p.category_id = :category_id 
     AND p.id != :product_id 
     ORDER BY p.created_at DESC 
-    LIMIT 4
+    LIMIT 8
 ");
 $related_stmt->execute([':category_id' => $product['category_id'], ':product_id' => $product_id]);
 $related_products = $related_stmt->fetchAll();
@@ -396,6 +403,41 @@ $display_description = !empty($product['detail_description']) ? $product['detail
 
         .lightbox-close:hover {
             background: rgba(255, 255, 255, 0.3);
+        }
+
+        .lightbox-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.5);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            color: white;
+            transition: background 0.2s ease;
+            z-index: 10;
+        }
+
+        .lightbox-nav:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .lightbox-nav:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .lightbox-prev {
+            left: 20px;
+        }
+
+        .lightbox-next {
+            right: 20px;
         }
 
         /* Video Gallery Styles */
@@ -955,71 +997,94 @@ $display_description = !empty($product['detail_description']) ? $product['detail
             }
         }
 
-        /* Hide related products navigation on desktop by default */
-        .product-detail-page .related-products-nav {
-            display: none;
+        /* Related Products Slider - Responsive with Scroll Snap */
+        .product-detail-page .related-products-slider-container {
+            position: relative;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 0 var(--space-md);
         }
 
-        /* Related Products Slider - Mobile Only */
-        @media (max-width: 768px) {
-            .product-detail-page .featured-grid {
-                display: flex;
-                gap: 1rem;
-                width: 100%;
-                transition: transform 0.5s ease;
-            }
+        .product-detail-page .related-products-slider {
+            position: relative;
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 0;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE/Edge */
+        }
 
+        .product-detail-page .related-products-slider::-webkit-scrollbar {
+            display: none; /* Chrome/Safari */
+        }
+
+        .product-detail-page .featured-grid.related-products-track {
+            display: flex;
+            gap: 1rem;
+            width: 100%;
+            padding: 0;
+        }
+
+        .product-detail-page .featured-product-card {
+            flex: 0 0 calc(25% - 0.75rem);
+            scroll-snap-align: start;
+            max-width: none;
+        }
+
+        .product-detail-page .related-products-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.3s ease;
+        }
+
+        .product-detail-page .related-products-nav:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .product-detail-page .related-products-prev {
+            left: var(--space-xs);
+        }
+
+        .product-detail-page .related-products-next {
+            right: var(--space-xs);
+        }
+
+        /* Desktop (≥1200px): 4 cards per page */
+        @media (min-width: 1200px) {
+            .product-detail-page .featured-product-card {
+                flex: 0 0 calc(25% - 0.75rem);
+            }
+        }
+
+        /* Tablet (900px-1199px): 3 cards per page */
+        @media (min-width: 900px) and (max-width: 1199px) {
+            .product-detail-page .featured-product-card {
+                flex: 0 0 calc(33.333% - 0.667rem);
+            }
+        }
+
+        /* Mobile (<900px): 2 cards per page */
+        @media (max-width: 899px) {
             .product-detail-page .featured-product-card {
                 flex: 0 0 calc(50% - 0.5rem);
-                max-width: none;
-            }
-
-            .product-detail-page .related-products-slider-container {
-                position: relative;
-                max-width: 100%;
-                margin: 0 auto;
-            }
-
-            .product-detail-page .related-products-slider {
-                position: relative;
-                background: transparent;
-                border: none;
-                border-radius: 0;
-                overflow: hidden;
-                padding: 0;
-                display: flex;
-                justify-content: center;
-                width: 100%;
-            }
-
-            .product-detail-page .related-products-nav {
-                position: absolute;
-                top: 50%;
-                transform: translateY(-50%);
-                width: 40px;
-                height: 40px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: var(--bg-card);
-                border: 1px solid var(--border-color);
-                border-radius: 50%;
-                cursor: pointer;
-                z-index: 10;
-                transition: all 0.3s ease;
-            }
-
-            .product-detail-page .related-products-nav:disabled {
-                opacity: 0.3;
-                cursor: not-allowed;
-            }
-
-            .product-detail-page .related-products-prev {
-                left: var(--space-sm);
-            }
-
-            .product-detail-page .related-products-next {
-                right: var(--space-sm);
             }
 
             .product-detail-page .featured-product-name {
@@ -1027,7 +1092,7 @@ $display_description = !empty($product['detail_description']) ? $product['detail
             }
 
             .product-detail-page .featured-product-price {
-                font-size: 0.85rem;
+                font-size: 0.9rem;
             }
         }
     </style>
@@ -1113,7 +1178,7 @@ $display_description = !empty($product['detail_description']) ? $product['detail
                 </div>
 
                 <!-- Right: Product Info -->
-                <div class="product-info-detail" data-variants="<?= htmlspecialchars(json_encode($variant_combinations)) ?>" data-variant-stock="<?= htmlspecialchars(json_encode($variant_data)) ?>" data-color-images="<?= htmlspecialchars(json_encode($color_image_lookup)) ?>" data-category="<?= htmlspecialchars($product['category_naam']) ?>">
+                <div class="product-info-detail" data-variants="<?= htmlspecialchars(json_encode($variant_combinations)) ?>" data-variant-stock="<?= htmlspecialchars(json_encode($variant_data)) ?>" data-color-image-groups="<?= htmlspecialchars(json_encode($color_image_groups)) ?>" data-category="<?= htmlspecialchars($product['category_naam']) ?>">
                     <h1 class="product-detail-title"><?= htmlspecialchars($display_title) ?></h1>
                     
                     <div class="trust-badges">
@@ -1875,13 +1940,16 @@ $display_description = !empty($product['detail_description']) ? $product['detail
 
     <script>
         // Gallery Navigation
-        const gallerySlides = document.querySelectorAll('.gallery-slide');
+        let gallerySlides = document.querySelectorAll('.gallery-slide');
         const thumbnails = document.querySelectorAll('.thumbnail');
         const prevBtn = document.getElementById('gallery-prev');
         const nextBtn = document.getElementById('gallery-next');
         let currentIndex = 0;
 
         function showSlide(index) {
+            // Do nothing if arrows are disabled (1 or fewer images)
+            if (gallerySlides.length <= 1) return;
+            
             if (gallerySlides.length === 0) return;
             
             // Wrap around
@@ -2026,6 +2094,16 @@ $display_description = !empty($product['detail_description']) ? $product['detail
     <!-- Lightbox -->
     <div class="lightbox" id="lightbox">
         <button class="lightbox-close" id="lightbox-close" aria-label="Close lightbox">&times;</button>
+        <button class="lightbox-nav lightbox-prev" id="lightbox-prev" aria-label="Previous image">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                <polyline points="15,18 9,12 15,6"/>
+            </svg>
+        </button>
+        <button class="lightbox-nav lightbox-next" id="lightbox-next" aria-label="Next image">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                <polyline points="9,18 15,12 9,6"/>
+            </svg>
+        </button>
         <img src="" alt="" class="lightbox-image" id="lightbox-image">
     </div>
 
@@ -2213,78 +2291,61 @@ $display_description = !empty($product['detail_description']) ? $product['detail
             });
         }
 
-        // Related Products Slider functionality (mobile only)
-        const relatedProductsTrack = document.getElementById('related-products-track');
+        // Related Products Slider functionality (scroll-snap based)
+        const relatedProductsSlider = document.querySelector('.related-products-slider');
         const relatedProductsPrev = document.getElementById('related-products-prev');
         const relatedProductsNext = document.getElementById('related-products-next');
-        let currentRelatedPage = 0;
-        let relatedCardWidth = 0;
-        const relatedGap = 16; // 1rem in pixels
-        const relatedProductsPerPage = 2; // 2 cards per page on mobile
+        const relatedProductsCards = relatedProductsSlider?.querySelectorAll('.featured-product-card');
 
-        function getRelatedCardWidth() {
-            const firstCard = relatedProductsTrack.querySelector('.featured-product-card');
-            if (firstCard) {
-                return firstCard.getBoundingClientRect().width;
-            }
-            return 0;
-        }
-
-        const totalRelatedProducts = <?= count($related_products) ?>;
-        let maxRelatedPage = Math.max(0, Math.ceil(totalRelatedProducts / relatedProductsPerPage) - 1);
-
-        if (relatedProductsTrack && relatedProductsPrev && relatedProductsNext) {
-            function updateRelatedSlider() {
-                const translateX = -(currentRelatedPage * (relatedCardWidth + relatedGap) * relatedProductsPerPage);
-                relatedProductsTrack.style.transform = `translateX(${translateX}px)`;
+        if (relatedProductsSlider && relatedProductsPrev && relatedProductsNext && relatedProductsCards.length > 0) {
+            const totalRelatedProducts = relatedProductsCards.length;
+            
+            function updateNavButtons() {
+                const scrollLeft = relatedProductsSlider.scrollLeft;
+                const maxScroll = relatedProductsSlider.scrollWidth - relatedProductsSlider.clientWidth;
                 
-                relatedProductsPrev.disabled = currentRelatedPage === 0;
-                relatedProductsNext.disabled = currentRelatedPage >= maxRelatedPage;
+                relatedProductsPrev.disabled = scrollLeft <= 1; // Allow for sub-pixel rounding
+                relatedProductsNext.disabled = scrollLeft >= maxScroll - 1;
             }
             
             relatedProductsPrev.addEventListener('click', function() {
-                if (currentRelatedPage > 0) {
-                    currentRelatedPage--;
-                    updateRelatedSlider();
-                }
+                relatedProductsSlider.scrollBy({
+                    left: -relatedProductsSlider.clientWidth,
+                    behavior: 'smooth'
+                });
             });
             
             relatedProductsNext.addEventListener('click', function() {
-                if (currentRelatedPage < maxRelatedPage) {
-                    currentRelatedPage++;
-                    updateRelatedSlider();
-                }
+                relatedProductsSlider.scrollBy({
+                    left: relatedProductsSlider.clientWidth,
+                    behavior: 'smooth'
+                });
             });
             
-            // Initialize
-            relatedCardWidth = getRelatedCardWidth();
+            // Update nav buttons on scroll
+            relatedProductsSlider.addEventListener('scroll', function() {
+                requestAnimationFrame(updateNavButtons);
+            });
             
-            // Hide nav buttons if only 1 page
-            if (totalRelatedProducts <= relatedProductsPerPage) {
+            // Hide nav buttons if all cards fit
+            if (totalRelatedProducts * (relatedProductsCards[0].offsetWidth + 16) <= relatedProductsSlider.clientWidth) {
                 relatedProductsPrev.style.display = 'none';
                 relatedProductsNext.style.display = 'none';
+            } else {
+                updateNavButtons();
             }
-            
-            updateRelatedSlider();
             
             // Recalculate on resize
             window.addEventListener('resize', function() {
-                relatedCardWidth = getRelatedCardWidth();
-                maxRelatedPage = Math.max(0, Math.ceil(totalRelatedProducts / relatedProductsPerPage) - 1);
-                if (currentRelatedPage > maxRelatedPage) {
-                    currentRelatedPage = maxRelatedPage;
-                }
-                
-                // Show/hide nav buttons based on product count
-                if (totalRelatedProducts <= relatedProductsPerPage) {
+                // Show/hide nav buttons based on fit
+                if (totalRelatedProducts * (relatedProductsCards[0].offsetWidth + 16) <= relatedProductsSlider.clientWidth) {
                     relatedProductsPrev.style.display = 'none';
                     relatedProductsNext.style.display = 'none';
                 } else {
                     relatedProductsPrev.style.display = 'flex';
                     relatedProductsNext.style.display = 'flex';
+                    updateNavButtons();
                 }
-                
-                updateRelatedSlider();
             });
         }
 
@@ -2340,24 +2401,83 @@ $display_description = !empty($product['detail_description']) ? $product['detail
             });
         });
 
-        // Color to Main Image Swap functionality
-        const colorImageLookup = productInfo ? JSON.parse(productInfo.dataset.colorImages || '{}') : {};
+        // Color to Gallery Swap functionality
+        const colorImageGroups = productInfo ? JSON.parse(productInfo.dataset.colorImageGroups || '{}') : {};
+        let currentColorImages = [];
 
-        function updateMainImageForColor(selectedColor) {
-            if (!selectedColor || Object.keys(colorImageLookup).length === 0) {
-                return;
+        // On page load: show first color's images (or default gallery if no color images)
+        function initializeGallery() {
+            const firstColor = Object.keys(colorImageGroups)[0];
+            if (firstColor && colorImageGroups[firstColor].length > 0) {
+                currentColorImages = colorImageGroups[firstColor];
+                renderGallery(currentColorImages);
             }
-            
-            // Case-insensitive lookup
+            // If no color images, keep the default gallery from product_images table
+        }
+
+        // When color is selected
+        function updateGalleryForColor(selectedColor) {
             const colorLower = selectedColor.toLowerCase();
-            const imagePath = colorImageLookup[colorLower];
+            if (colorImageGroups[colorLower] && colorImageGroups[colorLower].length > 0) {
+                currentColorImages = colorImageGroups[colorLower];
+                renderGallery(currentColorImages);
+            }
+        }
+
+        // Render gallery slides (replaces existing slides)
+        function renderGallery(imageData) {
+            const container = document.getElementById('gallery-image-container');
+            if (!container) return;
             
-            if (imagePath) {
-                // Find the ACTIVE gallery slide (the one currently visible)
-                const activeSlide = document.querySelector('.gallery-slide.active');
-                if (activeSlide) {
-                    activeSlide.src = '<?= PUBLIC_URL ?>/uploads/' + imagePath;
+            const existingSlides = container.querySelectorAll('.gallery-slide');
+            
+            // Remove existing slides
+            existingSlides.forEach(slide => slide.remove());
+            
+            // Add new slides
+            imageData.forEach((data, index) => {
+                const isVideo = data.media_type === 'video';
+                let slide;
+                
+                if (isVideo) {
+                    slide = document.createElement('video');
+                    slide.src = '<?= PUBLIC_URL ?>/uploads/' + data.image_path;
+                    slide.className = 'gallery-slide ' + (index === 0 ? 'active' : '');
+                    slide.dataset.index = index;
+                    slide.setAttribute('controls', '');
+                    slide.setAttribute('muted', '');
+                    slide.setAttribute('loop', '');
+                    slide.setAttribute('playsinline', '');
+                } else {
+                    slide = document.createElement('img');
+                    slide.src = '<?= PUBLIC_URL ?>/uploads/' + data.image_path;
+                    slide.alt = '<?= htmlspecialchars($display_title) ?>';
+                    slide.className = 'gallery-slide ' + (index === 0 ? 'active' : '');
+                    slide.dataset.index = index;
                 }
+                
+                container.appendChild(slide);
+            });
+            
+            // Reset gallery navigation
+            currentIndex = 0;
+            
+            // Re-query the updated slides so showSlide() uses current elements
+            gallerySlides = container.querySelectorAll('.gallery-slide');
+            
+            // Re-attach lightbox listeners to new slides
+            attachLightboxListeners(gallerySlides);
+            
+            // Disable arrows if only 1 image
+            const prevBtn = document.getElementById('gallery-prev');
+            const nextBtn = document.getElementById('gallery-next');
+
+            if (gallerySlides.length <= 1) {
+                prevBtn.classList.add('disabled');
+                nextBtn.classList.add('disabled');
+            } else {
+                prevBtn.classList.remove('disabled');
+                nextBtn.classList.remove('disabled');
             }
         }
 
@@ -2366,30 +2486,85 @@ $display_description = !empty($product['detail_description']) ? $product['detail
         colorButtons.forEach(button => {
             button.addEventListener('click', function() {
                 const selectedColor = this.dataset.value;
-                updateMainImageForColor(selectedColor);
+                updateGalleryForColor(selectedColor);
             });
         });
+
+        // Initialize on load
+        initializeGallery();
 
         // Lightbox functionality (images only)
         const lightbox = document.getElementById('lightbox');
         const lightboxImage = document.getElementById('lightbox-image');
         const lightboxClose = document.getElementById('lightbox-close');
-        const gallerySlidesForLightbox = document.querySelectorAll('.gallery-slide');
-        const descriptionImagesForLightbox = document.querySelectorAll('.description-image');
+        let currentLightboxIndex = 0;
+        let lightboxSlides = []; // Will hold only IMG slides from gallerySlides
 
-        // Open lightbox on single click - gallery slides
-        gallerySlidesForLightbox.forEach(slide => {
-            // Only attach to IMG elements, not VIDEO
-            if (slide.tagName !== 'IMG') return;
+        function updateLightboxSlides() {
+            // Get only IMG slides from current gallery (skip videos)
+            lightboxSlides = Array.from(gallerySlides).filter(slide => slide.tagName === 'IMG');
+        }
 
-            slide.addEventListener('click', function(e) {
-                const imgSrc = this.src;
-                lightboxImage.src = imgSrc;
-                lightboxImage.alt = this.alt;
-                lightbox.classList.add('active');
-                document.body.style.overflow = 'hidden'; // Prevent scrolling
+        function openLightbox(imgElement) {
+            updateLightboxSlides(); // Refresh in case color changed
+            currentLightboxIndex = lightboxSlides.findIndex(slide => slide.src === imgElement.src);
+            
+            lightboxImage.src = imgElement.src;
+            lightboxImage.alt = imgElement.alt;
+            lightbox.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            updateLightboxNavButtons();
+        }
+
+        function updateLightboxNavButtons() {
+            const prevBtn = document.getElementById('lightbox-prev');
+            const nextBtn = document.getElementById('lightbox-next');
+            
+            prevBtn.disabled = currentLightboxIndex <= 0;
+            nextBtn.disabled = currentLightboxIndex >= lightboxSlides.length - 1;
+            
+            // Hide buttons if only 1 image
+            if (lightboxSlides.length <= 1) {
+                prevBtn.style.display = 'none';
+                nextBtn.style.display = 'none';
+            } else {
+                prevBtn.style.display = 'flex';
+                nextBtn.style.display = 'flex';
+            }
+        }
+
+        function navigateLightbox(direction) {
+            if (direction === 'next' && currentLightboxIndex < lightboxSlides.length - 1) {
+                currentLightboxIndex++;
+            } else if (direction === 'prev' && currentLightboxIndex > 0) {
+                currentLightboxIndex--;
+            } else {
+                return; // At boundary
+            }
+            
+            const nextSlide = lightboxSlides[currentLightboxIndex];
+            lightboxImage.src = nextSlide.src;
+            lightboxImage.alt = nextSlide.alt;
+            updateLightboxNavButtons();
+        }
+
+        function attachLightboxListeners(slides) {
+            slides.forEach(slide => {
+                // Only attach to IMG elements, not VIDEO
+                if (slide.tagName !== 'IMG') return;
+
+                slide.addEventListener('click', function(e) {
+                    openLightbox(this);
+                });
             });
-        });
+        }
+
+        // Attach to initial page-load slides
+        const gallerySlidesForLightbox = document.querySelectorAll('.gallery-slide');
+        attachLightboxListeners(gallerySlidesForLightbox);
+
+        const descriptionImagesForLightbox = document.querySelectorAll('.description-image');
 
         // Open lightbox on single click - description images
         descriptionImagesForLightbox.forEach(img => {
@@ -2410,6 +2585,15 @@ $display_description = !empty($product['detail_description']) ? $product['detail
 
         lightboxClose.addEventListener('click', closeLightbox);
 
+        // Lightbox navigation buttons
+        document.getElementById('lightbox-prev').addEventListener('click', function() {
+            navigateLightbox('prev');
+        });
+
+        document.getElementById('lightbox-next').addEventListener('click', function() {
+            navigateLightbox('next');
+        });
+
         // Close on click outside image
         lightbox.addEventListener('click', function(e) {
             if (e.target === lightbox) {
@@ -2417,10 +2601,16 @@ $display_description = !empty($product['detail_description']) ? $product['detail
             }
         });
 
-        // Close on Escape key
+        // Close on Escape key and arrow navigation
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+            if (!lightbox.classList.contains('active')) return;
+            
+            if (e.key === 'Escape') {
                 closeLightbox();
+            } else if (e.key === 'ArrowLeft') {
+                navigateLightbox('prev');
+            } else if (e.key === 'ArrowRight') {
+                navigateLightbox('next');
             }
         });
 
@@ -2788,7 +2978,7 @@ $display_description = !empty($product['detail_description']) ? $product['detail
                     selectedSize = null;
                     
                     // If modal is open and showing step 2, re-render
-                    if (modal.classList.contains('active') && step2.style.display !== 'none') {
+                    if (modal && step2 && modal.classList.contains('active') && step2.style.display !== 'none') {
                         renderSizeList(currentFormat);
                     }
                 });
@@ -3019,15 +3209,23 @@ $display_description = !empty($product['detail_description']) ? $product['detail
             // Reset size selection when color changes (regardless of modal state)
             document.querySelectorAll('.color-swatch').forEach(function(btn) {
                 btn.addEventListener('click', function() {
-                    // Reset size selection
-                    selectedSize = null;
-                    selectedSizeDisplay.textContent = 'Select a size';
-                    selectedSizeValue.value = '';
-                    hiddenSizeBtn.dataset.value = '';
-                    hiddenSizeBtn.classList.remove('active');
+                    // Reset size selection (only if size selector exists)
+                    if (selectedSize !== null) {
+                        selectedSize = null;
+                    }
+                    if (selectedSizeDisplay) {
+                        selectedSizeDisplay.textContent = 'Select a size';
+                    }
+                    if (selectedSizeValue) {
+                        selectedSizeValue.value = '';
+                    }
+                    if (hiddenSizeBtn) {
+                        hiddenSizeBtn.dataset.value = '';
+                        hiddenSizeBtn.classList.remove('active');
+                    }
                     
                     // Re-render size list if modal is open
-                    if (modal.classList.contains('active')) {
+                    if (modal && modal.classList.contains('active')) {
                         renderSizeList();
                     }
                 });
