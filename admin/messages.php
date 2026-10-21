@@ -12,6 +12,13 @@ $page_title = 'Messages';
 
 // Handle resolve action
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'resolve' && isset($_POST['message_id'])) {
+    // Verify CSRF token
+    if (!isset($_POST['csrf_token']) || !is_string($_POST['csrf_token']) || !verify_csrf_token($_POST['csrf_token'])) {
+        set_flash_message('error', 'Invalid form submission. Please try again.');
+        header("Location: messages.php?view=" . intval($_POST['message_id']));
+        exit;
+    }
+    
     $message_id = (int)$_POST['message_id'];
     $stmt = $pdo->prepare("UPDATE contact_messages SET status = 'Resolved' WHERE id = ?");
     $stmt->execute([$message_id]);
@@ -103,6 +110,7 @@ if ($view_message_id) {
         <div class="order-detail-card" style="margin-top: 1.5rem;">
             <h4 class="card-title">Mark as Resolved</h4>
             <form method="POST">
+                <?= csrf_field() ?>
                 <input type="hidden" name="action" value="resolve">
                 <input type="hidden" name="message_id" value="<?= $message_detail['id'] ?>">
                 <button type="submit" class="btn btn-primary">Mark as Resolved</button>

@@ -571,6 +571,8 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
                     <ul>
                         <li><a href="<?= PUBLIC_URL ?>/shipping-info.php">Shipping Policy</a></li>
                         <li><a href="<?= PUBLIC_URL ?>/return-policy.php">Return Policy</a></li>
+                        <li><a href="<?= PUBLIC_URL ?>/terms-and-conditions.php">Terms & Conditions</a></li>
+                        <li><a href="<?= PUBLIC_URL ?>/privacy-policy.php">Privacy Policy</a></li>
                         <li><a href="<?= PUBLIC_URL ?>/faq.php">FAQ</a></li>
                         <li><a href="<?= PUBLIC_URL ?>/contact.php">Contact Us</a></li>
                     </ul>
@@ -586,6 +588,17 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
         <div class="unified-accordion-list">
             <div class="sidebar-label">NEED HELP?</div>
             
+            <!-- Warranty Policy (expandable, open by default) -->
+            <div class="sidebar-accordion-item">
+                <div class="sidebar-accordion-header active" data-target="warranty-content">
+                    <span>Warranty Policy</span>
+                    <span class="accordion-icon">+</span>
+                </div>
+                <div class="sidebar-accordion-body active" id="warranty-content">
+                    <?php include INCLUDES_PATH . '/warranty-content.php'; ?>
+                </div>
+            </div>
+
             <!-- Shipping Policy (expandable) -->
             <div class="sidebar-accordion-item">
                 <div class="sidebar-accordion-header" data-target="shipping-content">
@@ -613,17 +626,6 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
                 </div>
             </div>
 
-            <!-- Warranty Policy (expandable) -->
-            <div class="sidebar-accordion-item">
-                <div class="sidebar-accordion-header" data-target="warranty-content">
-                    <span>Warranty Policy</span>
-                    <span class="accordion-icon">+</span>
-                </div>
-                <div class="sidebar-accordion-body" id="warranty-content">
-                    <?php include INCLUDES_PATH . '/warranty-content.php'; ?>
-                </div>
-            </div>
-
             <!-- FAQ (plain link) -->
             <div class="sidebar-accordion-item">
                 <div class="sidebar-accordion-header link-only">
@@ -636,6 +638,22 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
             <div class="sidebar-accordion-item">
                 <div class="sidebar-accordion-header link-only">
                     <a href="<?= PUBLIC_URL ?>/contact.php">Contact Us</a>
+                    <span class="accordion-icon">+</span>
+                </div>
+            </div>
+
+            <!-- Terms & Conditions (plain link) -->
+            <div class="sidebar-accordion-item">
+                <div class="sidebar-accordion-header link-only">
+                    <a href="<?= PUBLIC_URL ?>/terms-and-conditions.php">Terms & Conditions</a>
+                    <span class="accordion-icon">+</span>
+                </div>
+            </div>
+
+            <!-- Privacy Policy (plain link) -->
+            <div class="sidebar-accordion-item">
+                <div class="sidebar-accordion-header link-only">
+                    <a href="<?= PUBLIC_URL ?>/privacy-policy.php">Privacy Policy</a>
                     <span class="accordion-icon">+</span>
                 </div>
             </div>

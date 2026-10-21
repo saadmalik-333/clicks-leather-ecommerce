@@ -10,6 +10,13 @@ require_admin();
 
 // Handle settings update (MUST be before header include)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
+    // Verify CSRF token
+    if (!isset($_POST['csrf_token']) || !is_string($_POST['csrf_token']) || !verify_csrf_token($_POST['csrf_token'])) {
+        set_flash_message('error', 'Invalid form submission. Please try again.');
+        header('Location: ' . ADMIN_URL . '/settings.php');
+        exit;
+    }
+    
     $shipping_is_free = $_POST['shipping_is_free'] ?? 'yes';
     $shipping_flat_cost = $_POST['shipping_flat_cost'] ?? '15.00';
     
@@ -27,6 +34,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
 
 // Handle hero settings update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['save_hero_settings']) || isset($_POST['remove_slide']))) {
+    // Verify CSRF token
+    if (!isset($_POST['csrf_token']) || !is_string($_POST['csrf_token']) || !verify_csrf_token($_POST['csrf_token'])) {
+        set_flash_message('error', 'Invalid form submission. Please try again.');
+        header('Location: ' . ADMIN_URL . '/settings.php');
+        exit;
+    }
+    
     $hero_subtitle = $_POST['hero_subtitle'] ?? '';
     $hero_title = $_POST['hero_title'] ?? '';
     $hero_description = $_POST['hero_description'] ?? '';
@@ -89,6 +103,7 @@ foreach ($hero_slides as $slide) {
     
     <div class="form-card">
         <form method="POST" id="settings-form">
+            <?= csrf_field() ?>
             <div class="form-section-title">Shipping Method</div>
             
             <div class="toggle-group" style="margin-bottom: var(--space-lg);">
@@ -128,6 +143,7 @@ foreach ($hero_slides as $slide) {
     
     <div class="form-card">
         <form method="POST" id="hero-settings-form" enctype="multipart/form-data">
+            <?= csrf_field() ?>
             
             <!-- Hero Text -->
             <div class="form-section-title">Hero Text</div>

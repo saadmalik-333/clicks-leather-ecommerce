@@ -4,6 +4,10 @@
  * Returns the count of products marked as popular (excluding a specific product ID)
  */
 require_once __DIR__ . '/../../includes/db_connect.php';
+require_once INCLUDES_PATH . '/functions.php';
+
+// Verify admin access
+require_admin();
 
 header('Content-Type: application/json');
 

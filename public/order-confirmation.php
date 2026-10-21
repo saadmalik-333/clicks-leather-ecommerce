@@ -12,23 +12,27 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Require login
+require_login();
+
 // Get order_id from URL
 $order_id = isset($_GET['order_id']) ? intval($_GET['order_id']) : 0;
 
 if ($order_id <= 0) {
-    set_flash_message('error', 'Invalid order ID.');
+    set_flash_message('error', 'Order not found.');
     redirect(PUBLIC_URL . '/index.php');
 }
 
-// Fetch order details
+// Fetch order details - only if belongs to logged-in user
+$user_id = $_SESSION['user_id'];
 $order_stmt = $pdo->prepare("
     SELECT o.*, 
            CASE WHEN o.user_id IS NOT NULL THEN u.naam ELSE NULL END as user_name
     FROM orders o
     LEFT JOIN users u ON o.user_id = u.id
-    WHERE o.id = ?
+    WHERE o.id = ? AND o.user_id = ?
 ");
-$order_stmt->execute([$order_id]);
+$order_stmt->execute([$order_id, $user_id]);
 $order = $order_stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$order) {
@@ -290,13 +294,23 @@ foreach ($order_items as $item) {
                     <polyline points="20,6 9,17 4,12"></polyline>
                 </svg>
             </div>
-            <h1 class="confirmation-title">Order Confirmed!</h1>
-            <p class="confirmation-subtitle">Thank you for your purchase</p>
+            <?php if ($order['status'] === 'pending_payment'): ?>
+                <h1 class="confirmation-title">Order Received</h1>
+                <p class="confirmation-subtitle">Thank you for your order</p>
+            <?php elseif ($order['status'] === 'cancelled'): ?>
+                <h1 class="confirmation-title">Order Cancelled</h1>
+                <p class="confirmation-subtitle">This order has been cancelled.</p>
+            <?php else: ?>
+                <h1 class="confirmation-title">Order Confirmed!</h1>
+                <p class="confirmation-subtitle">Thank you for your purchase</p>
+            <?php endif; ?>
         </div>
 
+        <?php if ($order['status'] === 'pending_payment'): ?>
         <div class="payment-message">
-            <strong>Payment Pending:</strong> Your order has been received. We will contact you shortly to confirm payment via Payoneer.
+            <strong>Payment Pending:</strong> Your order has been received. We will contact you shortly to confirm payment.
         </div>
+        <?php endif; ?>
 
         <div class="order-details-card">
             <div class="order-number">
@@ -347,7 +361,7 @@ foreach ($order_items as $item) {
             </div>
             <?php endif; ?>
             <div class="summary-row">
-                <span>Shipping (<?= ucfirst($order['shipping_method']) ?>)</span>
+                <span>Shipping</span>
                 <span><?= format_price($order['shipping_cost']) ?></span>
             </div>
             <div class="summary-row total">

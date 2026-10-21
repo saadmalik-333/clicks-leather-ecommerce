@@ -15,17 +15,6 @@
         </div>
         <div class="footer-col footer-accordion">
             <div class="accordion-header">
-                <h4>Collections</h4>
-                <span class="accordion-icon">+</span>
-            </div>
-            <ul class="accordion-content">
-                <li><a href="<?= PUBLIC_URL ?>/products.php?category=wallets">Wallets</a></li>
-                <li><a href="<?= PUBLIC_URL ?>/products.php?category=leather-jackets">Leather Jackets</a></li>
-                <li><a href="<?= PUBLIC_URL ?>/products.php?category=laptop-bags">Laptop Bags</a></li>
-            </ul>
-        </div>
-        <div class="footer-col footer-accordion">
-            <div class="accordion-header">
                 <h4>Company</h4>
                 <span class="accordion-icon">+</span>
             </div>
@@ -44,15 +33,32 @@
                 <li><a href="<?= PUBLIC_URL ?>/shipping-info.php">Shipping Info</a></li>
                 <li><a href="<?= PUBLIC_URL ?>/return-policy.php">Return Policy</a></li>
                 <li><a href="<?= PUBLIC_URL ?>/warranty.php">Warranty</a></li>
+                <li><a href="<?= PUBLIC_URL ?>/terms-and-conditions.php">Terms & Conditions</a></li>
+                <li><a href="<?= PUBLIC_URL ?>/privacy-policy.php">Privacy Policy</a></li>
             </ul>
         </div>
-        <div class="footer-col newsletter-col">
-            <h4>Newsletter</h4>
-            <p>Join our list for 10% off your first order.</p>
-            <form class="newsletter-form">
-                <input type="email" placeholder="Your email address" required>
-                <button type="submit" class="btn btn-primary btn-sm">Subscribe</button>
-            </form>
+        <div class="footer-col footer-accordion">
+            <div class="accordion-header">
+                <h4>Collections</h4>
+                <span class="accordion-icon">+</span>
+            </div>
+            <ul class="accordion-content">
+                <li><a href="<?= PUBLIC_URL ?>/products.php?category=wallets">Wallets</a></li>
+                <li><a href="<?= PUBLIC_URL ?>/products.php?category=leather-jackets">Leather Jackets</a></li>
+                <li><a href="<?= PUBLIC_URL ?>/products.php?category=laptop-bags">Laptop Bags</a></li>
+                <li><a href="<?= PUBLIC_URL ?>/products.php?category=ladies-bags">Ladies Bags</a></li>
+                <li class="footer-mobile-only"><a href="<?= PUBLIC_URL ?>/products.php?category=backpacks">Backpacks</a></li>
+                <li class="footer-mobile-only"><a href="<?= PUBLIC_URL ?>/products.php?category=duffel-bags">Duffel Bags</a></li>
+                <li class="footer-mobile-only"><a href="<?= PUBLIC_URL ?>/products.php?category=leather-shoes">Leather Shoes</a></li>
+            </ul>
+        </div>
+        <div class="footer-col footer-social-col">
+            <h4 class="footer-heading-spacer">More Collections</h4>
+            <ul class="footer-links-list">
+                <li><a href="<?= PUBLIC_URL ?>/products.php?category=backpacks">Backpacks</a></li>
+                <li><a href="<?= PUBLIC_URL ?>/products.php?category=duffel-bags">Duffel Bags</a></li>
+                <li><a href="<?= PUBLIC_URL ?>/products.php?category=leather-shoes">Leather Shoes</a></li>
+            </ul>
             <div class="footer-social-links">
                 <a href="https://www.facebook.com/share/1JdmTwcNar/" target="_blank" rel="noopener" class="social-icon-link" aria-label="Facebook">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">

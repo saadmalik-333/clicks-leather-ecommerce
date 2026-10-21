@@ -10,6 +10,13 @@ require_admin();
 
 // Handle status update (MUST be before header include)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
+    // Verify CSRF token
+    if (!isset($_POST['csrf_token']) || !is_string($_POST['csrf_token']) || !verify_csrf_token($_POST['csrf_token'])) {
+        set_flash_message('error', 'Invalid form submission. Please try again.');
+        header('Location: ' . ADMIN_URL . '/orders.php?view=' . intval($_POST['order_id']));
+        exit;
+    }
+    
     $order_id = intval($_POST['order_id']);
     $new_status = $_POST['status'];
     
@@ -143,7 +150,7 @@ if ($view_order_id) {
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Shipping Method:</span>
-                    <span class="detail-value"><?= ucfirst($order_detail['shipping_method']) ?></span>
+                    <span class="detail-value"><?= $order_detail['shipping_method'] === 'free' ? 'Free Shipping' : 'Flat Rate' ?></span>
                 </div>
             </div>
 
@@ -228,6 +235,7 @@ if ($view_order_id) {
             <h4 class="card-title">Update Order Status</h4>
             <form method="POST" class="status-update-form" id="status-update-form">
                 <input type="hidden" name="order_id" value="<?= $order_detail['id'] ?>">
+                <?= csrf_field() ?>
                 <div class="form-group">
                     <label for="status">New Status:</label>
                     <select name="status" id="status" required>

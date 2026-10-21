@@ -1654,7 +1654,7 @@ textarea {
 
 .footer-grid {
     display: grid;
-    grid-template-columns: 1.2fr 1fr 1fr 1fr 2.5fr;
+    grid-template-columns: 1.2fr 1fr 1fr 1.1fr 2fr;
     gap: var(--space-lg);
     max-width: 1200px;
     margin: 0 auto var(--space-2xl);
@@ -1737,6 +1737,10 @@ textarea {
     color: var(--color-primary);
 }
 
+.footer-mobile-only {
+    display: none;
+}
+
 /* Footer Accordion Base */
 .footer-accordion .accordion-header {
     display: flex;
@@ -1754,23 +1758,6 @@ textarea {
 
 .footer-accordion .accordion-content {
     display: block;
-}
-
-.newsletter-form {
-    display: flex;
-    margin-top: var(--space-md);
-    gap: var(--space-xs);
-    min-width: 0;
-}
-
-.newsletter-form input {
-    flex: 1;
-    padding: 0.75rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    background: var(--bg-input);
-    color: var(--text-primary);
-    font-family: var(--font-body);
 }
 
 .footer-bottom {
@@ -1854,10 +1841,21 @@ textarea {
         transform: rotate(45deg);
     }
 
-    .newsletter-col {
-        margin-top: var(--space-lg);
-        padding-top: var(--space-lg);
-        border-top: 1px solid var(--border-color);
+    .footer-social-col {
+        margin-top: 0;
+        padding-top: var(--space-md);
+    }
+
+    .footer-heading-spacer {
+        display: none;
+    }
+
+    .footer-mobile-only {
+        display: block;
+    }
+
+    .footer-links-list {
+        display: none;
     }
 
     .site-footer {

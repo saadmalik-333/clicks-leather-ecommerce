@@ -7,9 +7,9 @@ require_once __DIR__ . '/includes/header.php';
 
 // Fetch stats
 $total_products = $pdo->query("SELECT COUNT(*) FROM products")->fetchColumn();
-$total_orders   = $pdo->query("SELECT COUNT(*) FROM orders")->fetchColumn();
+$total_orders   = $pdo->query("SELECT COUNT(*) FROM orders WHERE status IN ('pending', 'processing', 'shipped', 'delivered')")->fetchColumn();
 $total_users    = $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'customer'")->fetchColumn();
-$total_revenue  = $pdo->query("SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE status != 'cancelled'")->fetchColumn();
+$total_revenue  = $pdo->query("SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE status IN ('pending', 'processing', 'shipped', 'delivered')")->fetchColumn();
 
 // Fetch recent orders (last 5)
 $recent_orders = $pdo->query(
@@ -123,7 +123,7 @@ $recent_orders = $pdo->query(
                             <td><?= format_price($order['total_amount']) ?></td>
                             <td>
                                 <span class="status-badge status-<?= $order['status'] ?>">
-                                    <?= ucfirst($order['status']) ?>
+                                    <?= ucfirst(str_replace('_', ' ', $order['status'])) ?>
                                 </span>
                             </td>
                             <td><?= date('M d, Y', strtotime($order['created_at'])) ?></td>

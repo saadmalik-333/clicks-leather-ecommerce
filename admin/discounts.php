@@ -12,6 +12,13 @@ require_admin();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Add/Update discount
     if (isset($_POST['save_discount'])) {
+        // Verify CSRF token
+        if (!isset($_POST['csrf_token']) || !is_string($_POST['csrf_token']) || !verify_csrf_token($_POST['csrf_token'])) {
+            set_flash_message('error', 'Invalid form submission. Please try again.');
+            header('Location: ' . ADMIN_URL . '/discounts.php');
+            exit;
+        }
+        
         $discount_id = isset($_POST['discount_id']) ? intval($_POST['discount_id']) : null;
         $type = $_POST['type'] ?? 'sitewide';
         
@@ -74,6 +81,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Delete discount
     if (isset($_POST['delete_discount'])) {
+        // Verify CSRF token
+        if (!isset($_POST['csrf_token']) || !is_string($_POST['csrf_token']) || !verify_csrf_token($_POST['csrf_token'])) {
+            set_flash_message('error', 'Invalid form submission. Please try again.');
+            header('Location: ' . ADMIN_URL . '/discounts.php');
+            exit;
+        }
+        
         $discount_id = intval($_POST['discount_id']);
         $stmt = $pdo->prepare("DELETE FROM discounts WHERE id = ?");
         $stmt->execute([$discount_id]);
@@ -84,6 +98,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Toggle active status
     if (isset($_POST['toggle_discount'])) {
+        // Verify CSRF token
+        if (!isset($_POST['csrf_token']) || !is_string($_POST['csrf_token']) || !verify_csrf_token($_POST['csrf_token'])) {
+            set_flash_message('error', 'Invalid form submission. Please try again.');
+            header('Location: ' . ADMIN_URL . '/discounts.php');
+            exit;
+        }
+        
         $discount_id = intval($_POST['discount_id']);
         $is_active = intval($_POST['is_active']);
         $stmt = $pdo->prepare("UPDATE discounts SET is_active = ? WHERE id = ?");
@@ -143,6 +164,7 @@ require_once __DIR__ . '/includes/header.php';
         <h4 class="form-section-title"><?= $edit_discount ? 'Edit Discount' : 'Add New Discount' ?></h4>
         
         <form method="POST" id="discount-form">
+            <?= csrf_field() ?>
             <?php if ($edit_discount): ?>
                 <input type="hidden" name="discount_id" value="<?= $edit_discount['id'] ?>">
             <?php endif; ?>
@@ -264,6 +286,7 @@ require_once __DIR__ . '/includes/header.php';
                             <td>
                                 <div class="actions-wrapper">
                                     <form method="POST" action="<?= ADMIN_URL ?>/discounts.php" style="display: inline;">
+                                        <?= csrf_field() ?>
                                         <input type="hidden" name="discount_id" value="<?= $discount['id'] ?>">
                                         <input type="hidden" name="is_active" value="<?= $discount['is_active'] ? 0 : 1 ?>">
                                         <button type="submit" name="toggle_discount" class="btn-action" title="<?= $discount['is_active'] ? 'Deactivate' : 'Activate' ?>">
@@ -277,6 +300,7 @@ require_once __DIR__ . '/includes/header.php';
                                         </svg>
                                     </a>
                                     <form method="POST" action="<?= ADMIN_URL ?>/discounts.php" style="display: inline;">
+                                        <?= csrf_field() ?>
                                         <input type="hidden" name="discount_id" value="<?= $discount['id'] ?>">
                                         <button type="submit" name="delete_discount" class="btn-action btn-delete" title="Delete">
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

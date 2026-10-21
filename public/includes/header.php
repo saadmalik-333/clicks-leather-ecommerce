@@ -18,7 +18,7 @@ require_active_session();
     
     <!-- Announcement Bar (Tier 1) -->
     <div class="announcement-bar">
-        <span>60 DAY RETURNS</span>
+        <span>14 DAY RETURNS</span>
         <span class="separator">|</span>
         <span>WORLDWIDE SHIPPING</span>
         <span class="separator">|</span>

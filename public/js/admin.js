@@ -239,6 +239,7 @@ function addVariant() {
     row.className = 'variant-row';
     row.id = 'variant-row-' + variantCounter;
     row.innerHTML = `
+        <input type="hidden" name="variant_id[]" value="">
         <div class="variant-field size-field">
             <label>Size</label>
             <input type="text" name="variant_size[]" placeholder="e.g., M, L, 42">

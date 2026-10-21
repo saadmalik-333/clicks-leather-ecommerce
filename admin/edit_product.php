@@ -257,36 +257,81 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ]);
                 }
 
-                // Delete existing variants
-                $pdo->prepare("DELETE FROM product_variants WHERE product_id = :product_id")
-                    ->execute([':product_id' => $product_id]);
+                // Handle variants using hidden ID reconcile pattern
+                // FIRST: Fetch existing variant IDs for this product
+                $existing_variants_stmt = $pdo->prepare("SELECT id FROM product_variants WHERE product_id = :product_id");
+                $existing_variants_stmt->execute([':product_id' => $product_id]);
+                $existing_variant_ids = [];
+                foreach ($existing_variants_stmt->fetchAll(PDO::FETCH_COLUMN) as $id) {
+                    $existing_variant_ids[$id] = true;
+                }
 
-                // Re-insert variants
-                $sizes  = $_POST['variant_size'] ?? [];
-                $colors = $_POST['variant_color'] ?? [];
-                $hexes  = $_POST['variant_hex'] ?? [];
-                $stocks = $_POST['variant_stock'] ?? [];
+                // Get submitted data
+                $variant_ids = $_POST['variant_id'] ?? [];
+                $sizes       = $_POST['variant_size'] ?? [];
+                $colors      = $_POST['variant_color'] ?? [];
+                $hexes       = $_POST['variant_hex'] ?? [];
+                $stocks      = $_POST['variant_stock'] ?? [];
 
-                $variant_stmt = $pdo->prepare(
-                    "INSERT INTO product_variants (product_id, size, color, hex_code, stock_quantity) 
-                     VALUES (:product_id, :size, :color, :hex_code, :stock)"
+                // Track which IDs were submitted (for deletion later)
+                $submitted_variant_ids = [];
+
+                // Prepare statements once before the loop
+                $update_stmt = $pdo->prepare(
+                    "UPDATE product_variants SET size = ?, color = ?, hex_code = ?, stock_quantity = ?
+                     WHERE id = ? AND product_id = ?"
+                );
+                $insert_stmt = $pdo->prepare(
+                    "INSERT INTO product_variants (product_id, size, color, hex_code, stock_quantity)
+                     VALUES (?, ?, ?, ?, ?)"
                 );
 
+                // Process each row
                 for ($i = 0; $i < count($sizes); $i++) {
                     $size  = clean_input($sizes[$i] ?? '');
                     $color = clean_input($colors[$i] ?? '');
                     $hex   = clean_input($hexes[$i] ?? '');
                     $stock = intval($stocks[$i] ?? 0);
+                    $existing_id = !empty($variant_ids[$i]) ? intval($variant_ids[$i]) : null;
 
-                    if (!empty($size) || !empty($color)) {
-                        $variant_stmt->execute([
-                            ':product_id' => $product_id,
-                            ':size'       => $size ?: null,
-                            ':color'      => $color ?: null,
-                            ':hex_code'   => $hex ?: null,
-                            ':stock'      => $stock
+                    // Skip empty rows
+                    if (empty($size) && empty($color)) {
+                        continue;
+                    }
+
+                    if ($existing_id && isset($existing_variant_ids[$existing_id]) && !isset($submitted_variant_ids[$existing_id])) {
+                        // UPDATE existing variant (only if it belongs to this product and not already processed)
+                        $update_stmt->execute([
+                            $size ?: null,
+                            $color ?: null,
+                            $hex ?: null,
+                            $stock,
+                            $existing_id,
+                            $product_id
+                        ]);
+                        $submitted_variant_ids[$existing_id] = true;
+                    } else {
+                        // INSERT new variant (covers new rows, tampered ids, and duplicated ids in same request)
+                        $insert_stmt->execute([
+                            $product_id,
+                            $size ?: null,
+                            $color ?: null,
+                            $hex ?: null,
+                            $stock
                         ]);
                     }
+                }
+
+                // DELETE variants that were removed (exist in DB but not in submitted list)
+                $ids_to_delete = array_diff_key($existing_variant_ids, $submitted_variant_ids);
+                if (!empty($ids_to_delete)) {
+                    $delete_ids = array_keys($ids_to_delete);
+                    $placeholders = str_repeat('?,', count($delete_ids) - 1) . '?';
+                    $params = array_merge($delete_ids, [$product_id]);
+                    $delete_stmt = $pdo->prepare(
+                        "DELETE FROM product_variants WHERE id IN ($placeholders) AND product_id = ?"
+                    );
+                    $delete_stmt->execute($params);
                 }
 
                 // Handle color images
@@ -670,6 +715,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_review_visibil
                     <?php if (!empty($variants)): ?>
                         <?php foreach ($variants as $i => $variant): ?>
                             <div class="variant-row" id="variant-row-<?= $i ?>">
+                                <input type="hidden" name="variant_id[]" value="<?= (int)$variant['id'] ?>">
                                 <div class="variant-field size-field">
                                     <label>Size</label>
                                     <input type="text" name="variant_size[]" 
@@ -697,6 +743,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_review_visibil
                         <?php endforeach; ?>
                     <?php else: ?>
                         <div class="variant-row" id="variant-row-0">
+                            <input type="hidden" name="variant_id[]" value="">
                             <div class="variant-field size-field">
                                 <label>Size</label>
                                 <input type="text" name="variant_size[]" placeholder="e.g., M, L, 42">
