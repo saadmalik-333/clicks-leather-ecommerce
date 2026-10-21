@@ -27,7 +27,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $message = trim($_POST['message'] ?? '');
 
     // Validation
-    if (empty($name)) {
+    if (!isset($_POST['csrf_token']) || !verify_csrf_token($_POST['csrf_token'])) {
+        $error = 'Your session expired. Please refresh the page and try again.';
+    } elseif (empty($name)) {
         $error = 'Name is required.';
     } elseif (empty($email)) {
         $error = 'Email is required.';
@@ -274,6 +276,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
 
             <form class="contact-form" method="POST" action="">
+                <?= csrf_field() ?>
                 <div class="form-row">
                     <div class="form-group">
                         <label for="name">Name <span class="required">*</span></label>

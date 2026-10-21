@@ -23,6 +23,14 @@ $is_google_user = !empty($user_google_id);
 // POST HANDLERS (Must be before any HTML output)
 // ============================================================
 
+// CSRF verification for all account POST actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_POST['csrf_token']) || !verify_csrf_token($_POST['csrf_token'])) {
+        set_flash_message('error', 'Your session expired. Please refresh the page and try again.');
+        redirect(PUBLIC_URL . '/account.php');
+    }
+}
+
 // Profile Update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_profile') {
     $new_name = clean_input($_POST['name'] ?? '');
@@ -901,6 +909,7 @@ $addresses = $addresses_stmt->fetchAll(PDO::FETCH_ASSOC);
                         <div class="profile-form-container">
                             <h3>Personal Information</h3>
                             <form method="POST" action="<?= PUBLIC_URL ?>/account.php#profile">
+                                <?= csrf_field() ?>
                                 <input type="hidden" name="action" value="update_profile">
                                 <div class="form-group">
                                     <label for="name">Full Name</label>
@@ -923,6 +932,7 @@ $addresses = $addresses_stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <p class="info-note">Password changes aren't available for accounts signed in with Google.</p>
                             <?php endif; ?>
                             <form method="POST" action="<?= PUBLIC_URL ?>/account.php#profile">
+                                <?= csrf_field() ?>
                                 <input type="hidden" name="action" value="change_password">
                                 <div class="form-group">
                                     <label for="current_password">Current Password</label>
@@ -973,6 +983,7 @@ $addresses = $addresses_stmt->fetchAll(PDO::FETCH_ASSOC);
                         <div class="address-form-container">
                             <h3>Add New Address</h3>
                             <form method="POST" action="<?= PUBLIC_URL ?>/account.php#addresses">
+                                <?= csrf_field() ?>
                                 <input type="hidden" name="action" value="add_address">
                                 <div class="form-row">
                                     <div class="form-group">
@@ -1045,6 +1056,7 @@ $addresses = $addresses_stmt->fetchAll(PDO::FETCH_ASSOC);
                                         <div class="address-actions">
                                             <?php if (!$address['is_default']): ?>
                                                 <form method="POST" action="<?= PUBLIC_URL ?>/account.php#addresses" style="display: inline;">
+                                                    <?= csrf_field() ?>
                                                     <input type="hidden" name="action" value="set_default_address">
                                                     <input type="hidden" name="address_id" value="<?= $address['id'] ?>">
                                                     <button type="submit" class="btn btn-outline btn-sm">Set Default</button>
@@ -1052,6 +1064,7 @@ $addresses = $addresses_stmt->fetchAll(PDO::FETCH_ASSOC);
                                             <?php endif; ?>
                                             <button type="button" class="btn btn-outline btn-sm" onclick="editAddress(<?= $address['id'] ?>, '<?= htmlspecialchars($address['full_name']) ?>', '<?= htmlspecialchars($address['address_line1']) ?>', '<?= htmlspecialchars($address['address_line2']) ?>', '<?= htmlspecialchars($address['city']) ?>', '<?= htmlspecialchars($address['state']) ?>', '<?= htmlspecialchars($address['country']) ?>', '<?= htmlspecialchars($address['postal_code']) ?>', <?= $address['is_default'] ?>)">Edit</button>
                                             <form method="POST" action="<?= PUBLIC_URL ?>/account.php#addresses" style="display: inline;">
+                                                <?= csrf_field() ?>
                                                 <input type="hidden" name="action" value="delete_address">
                                                 <input type="hidden" name="address_id" value="<?= $address['id'] ?>">
                                                 <button type="submit" class="btn btn-outline btn-sm" style="color: var(--color-error); border-color: var(--color-error);" onclick="return confirm('Are you sure you want to delete this address?');">Delete</button>

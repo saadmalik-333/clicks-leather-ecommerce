@@ -11,6 +11,12 @@ $product_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 // Handle POST requests (review submission)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_review'])) {
+    // Verify CSRF token
+    if (!isset($_POST['csrf_token']) || !verify_csrf_token($_POST['csrf_token'])) {
+        set_flash_message('error', 'Your session expired. Please refresh the page and try again.');
+        redirect(PUBLIC_URL . '/product-detail.php?id=' . $product_id);
+    }
+    
     // User must be logged in
     if (!is_logged_in()) {
         set_flash_message('error', 'Please log in to submit a review.');
@@ -1628,6 +1634,7 @@ $display_description = !empty($product['detail_description']) ? $product['detail
                 </div>
             <?php else: ?>
                 <form method="POST" action="<?= PUBLIC_URL ?>/product-detail.php?id=<?= $product_id ?>" class="review-form-section">
+                    <?= csrf_field() ?>
                     <input type="hidden" name="submit_review" value="1">
                     
                     <div class="review-form-group">

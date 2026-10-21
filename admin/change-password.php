@@ -12,6 +12,12 @@ $page_title = 'Change Password';
 
 // POST handling (now safe - only admins can reach this)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Verify CSRF token
+    if (!isset($_POST['csrf_token']) || !verify_csrf_token($_POST['csrf_token'])) {
+        set_flash_message('error', 'Your session expired. Please refresh the page and try again.');
+        redirect(ADMIN_URL . '/change-password.php');
+    }
+    
     $current_password = $_POST['current_password'] ?? '';
     $new_password = $_POST['new_password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
@@ -71,6 +77,7 @@ require_once __DIR__ . '/includes/header.php';
     
     <div class="form-card">
         <form method="POST" action="">
+            <?= csrf_field() ?>
             <div class="form-group">
                 <label for="current_password">Current Password</label>
                 <div class="password-input-wrapper">
