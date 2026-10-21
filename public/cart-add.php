@@ -19,6 +19,13 @@ if (!isset($_SESSION['cart_session_id'])) {
     $_SESSION['cart_session_id'] = uniqid('cart_', true);
 }
 
+// Verify CSRF token
+if (!isset($_SERVER['HTTP_X_CSRF_TOKEN']) || !verify_csrf_token($_SERVER['HTTP_X_CSRF_TOKEN'])) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Your session expired. Please refresh the page and try again.']);
+    exit;
+}
+
 try {
     // Get POST data
     $input = json_decode(file_get_contents('php://input'), true);

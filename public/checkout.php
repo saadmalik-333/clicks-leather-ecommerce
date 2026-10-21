@@ -161,6 +161,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'postal_code' => clean_input($_POST['postal_code'] ?? ''),
     ];
 
+    // CSRF verification
+    if (!isset($_POST['csrf_token']) || !verify_csrf_token($_POST['csrf_token'])) {
+        $errors[] = 'Your session expired. Please refresh the page and try again.';
+    }
+
     // Validation
     if (empty($form_data['email'])) {
         $errors[] = 'Email is required.';
@@ -648,6 +653,7 @@ $countries = [
         <?php endif; ?>
 
         <form method="POST">
+            <?= csrf_field() ?>
             <div class="checkout-grid">
                 <!-- Left Column: Form -->
                 <div class="checkout-form">

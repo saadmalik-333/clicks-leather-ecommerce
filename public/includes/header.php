@@ -131,6 +131,11 @@ require_active_session();
 
 <script src="<?= PUBLIC_URL ?>/js/flash-message.js"></script>
 
+<!-- CSRF Token for JavaScript -->
+<script>
+    window.CSRF_TOKEN = '<?= generate_csrf_token() ?>';
+</script>
+
 <!-- Search Script -->
 <script src="<?= PUBLIC_URL ?>/js/search.js"></script>
 
