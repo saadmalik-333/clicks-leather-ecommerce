@@ -22,11 +22,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     
     $valid_statuses = ['pending_payment', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'];
     if (in_array($new_status, $valid_statuses)) {
-        $stmt = $pdo->prepare("UPDATE orders SET status = ? WHERE id = ?");
-        $stmt->execute([$new_status, $order_id]);
-        set_flash_message('success', 'Order status updated successfully.');
-        header('Location: ' . ADMIN_URL . '/orders.php');
-        exit;
+        $result = apply_order_stock($pdo, $order_id, $new_status);
+        
+        if ($result['success']) {
+            set_flash_message('success', 'Order status updated successfully.');
+            header('Location: ' . ADMIN_URL . '/orders.php');
+            exit;
+        } else {
+            set_flash_message('error', $result['message']);
+            header('Location: ' . ADMIN_URL . '/orders.php?view=' . $order_id);
+            exit;
+        }
     }
 }
 

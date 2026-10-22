@@ -10,6 +10,11 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Category name for products that track stock (pre-made items like wallets)
+if (!defined('STOCKED_CATEGORY_NAME')) {
+    define('STOCKED_CATEGORY_NAME', 'Wallets');
+}
+
 /**
  * Clean user input for database storage — trim whitespace and remove magic quotes
  * Does NOT escape HTML entities — that should be done at output time
@@ -463,4 +468,148 @@ function get_product_discount(PDO $pdo, int $product_id, int $category_id): ?arr
     $discount = $stmt->fetch(PDO::FETCH_ASSOC);
     
     return $discount ?: null;
+}
+
+/**
+ * Apply stock changes when order status changes
+ * Deducts stock when moving to a paid status, restores when cancelling
+ * Only for products in the stocked category (Wallets)
+ * 
+ * @param PDO $pdo Database connection
+ * @param int $order_id Order ID
+ * @param string $new_status New order status
+ * @return array ['success' => bool, 'message' => string]
+ */
+function apply_order_stock(PDO $pdo, int $order_id, string $new_status): array {
+    // Define paid statuses
+    $paid_statuses = ['pending', 'processing', 'shipped', 'delivered'];
+    
+    try {
+        $pdo->beginTransaction();
+        
+        // Read current status and flag with row lock
+        $stmt = $pdo->prepare("SELECT status, stock_deducted FROM orders WHERE id = ? FOR UPDATE");
+        $stmt->execute([$order_id]);
+        $order = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$order) {
+            $pdo->rollBack();
+            return ['success' => false, 'message' => 'Order not found.'];
+        }
+        
+        $current_status = $order['status'];
+        $stock_deducted = (int)$order['stock_deducted'];
+        
+        // If new status equals current status, no action needed
+        if ($new_status === $current_status) {
+            $pdo->rollBack();
+            return ['success' => true, 'message' => ''];
+        }
+        
+        // Case: moving to paid status and stock not yet deducted
+        if (in_array($new_status, $paid_statuses) && $stock_deducted === 0) {
+            // Claim the flag atomically
+            $stmt = $pdo->prepare("UPDATE orders SET stock_deducted = 1 WHERE id = ? AND stock_deducted = 0");
+            $stmt->execute([$order_id]);
+            
+            if ($stmt->rowCount() === 0) {
+                // Flag already claimed by another process
+                $pdo->rollBack();
+                return ['success' => false, 'message' => 'Order status was already updated. Please refresh and try again.'];
+            }
+            
+            // Get stocked items only (Wallets category, variant_id IS NOT NULL)
+            $stmt = $pdo->prepare("
+                SELECT oi.variant_id, oi.quantity
+                FROM order_items oi
+                JOIN products p ON oi.product_id = p.id
+                JOIN categories c ON p.category_id = c.id
+                WHERE oi.order_id = ? 
+                  AND c.naam = ?
+                  AND oi.variant_id IS NOT NULL
+            ");
+            $stmt->execute([$order_id, STOCKED_CATEGORY_NAME]);
+            $items = $stmt->fetchAll();
+            
+            if (empty($items)) {
+                // No stocked items, update status and commit with flag set
+                $stmt = $pdo->prepare("UPDATE orders SET status = ? WHERE id = ?");
+                $stmt->execute([$new_status, $order_id]);
+                $pdo->commit();
+                return ['success' => true, 'message' => ''];
+            }
+            
+            // Deduct stock for each item
+            foreach ($items as $item) {
+                $stmt = $pdo->prepare("
+                    UPDATE product_variants 
+                    SET stock_quantity = stock_quantity - ? 
+                    WHERE id = ? AND stock_quantity >= ?
+                ");
+                $stmt->execute([$item['quantity'], $item['variant_id'], $item['quantity']]);
+                
+                if ($stmt->rowCount() === 0) {
+                    // Stock insufficient - rollback everything
+                    $pdo->rollBack();
+                    return ['success' => false, 'message' => 'Not enough stock for one or more wallets. Please restock or contact the customer before moving this order to a paid status.'];
+                }
+            }
+            
+            // Update order status
+            $stmt = $pdo->prepare("UPDATE orders SET status = ? WHERE id = ?");
+            $stmt->execute([$new_status, $order_id]);
+            
+            $pdo->commit();
+            return ['success' => true, 'message' => ''];
+        }
+        
+        // Case: moving to non-paid status (cancelled or pending_payment) and stock was deducted
+        if (!in_array($new_status, $paid_statuses) && $stock_deducted === 1) {
+            // Get stocked items only
+            $stmt = $pdo->prepare("
+                SELECT oi.variant_id, oi.quantity
+                FROM order_items oi
+                JOIN products p ON oi.product_id = p.id
+                JOIN categories c ON p.category_id = c.id
+                WHERE oi.order_id = ? 
+                  AND c.naam = ?
+                  AND oi.variant_id IS NOT NULL
+            ");
+            $stmt->execute([$order_id, STOCKED_CATEGORY_NAME]);
+            $items = $stmt->fetchAll();
+            
+            if (!empty($items)) {
+                // Restore stock for each item
+                foreach ($items as $item) {
+                    $stmt = $pdo->prepare("
+                        UPDATE product_variants 
+                        SET stock_quantity = stock_quantity + ? 
+                        WHERE id = ?
+                    ");
+                    $stmt->execute([$item['quantity'], $item['variant_id']]);
+                }
+            }
+            
+            // Reset flag and update status
+            $stmt = $pdo->prepare("UPDATE orders SET stock_deducted = 0, status = ? WHERE id = ?");
+            $stmt->execute([$new_status, $order_id]);
+            
+            $pdo->commit();
+            return ['success' => true, 'message' => ''];
+        }
+        
+        // No stock action needed, just update status
+        $stmt = $pdo->prepare("UPDATE orders SET status = ? WHERE id = ?");
+        $stmt->execute([$new_status, $order_id]);
+        
+        $pdo->commit();
+        return ['success' => true, 'message' => ''];
+        
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        error_log('Order stock update error: ' . $e->getMessage());
+        return ['success' => false, 'message' => 'Could not update the order. Please try again.'];
+    }
 }
