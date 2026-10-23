@@ -16,6 +16,17 @@ if (!defined('STOCKED_CATEGORY_NAME')) {
 }
 
 /**
+ * Generate and store Google OAuth state parameter for CSRF protection
+ * 
+ * @return string The state token
+ */
+function google_oauth_state(): string {
+    $state = bin2hex(random_bytes(32));
+    $_SESSION['google_oauth_state'] = $state;
+    return $state;
+}
+
+/**
  * Clean user input for database storage — trim whitespace and remove magic quotes
  * Does NOT escape HTML entities — that should be done at output time
  */
