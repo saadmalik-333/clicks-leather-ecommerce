@@ -20,9 +20,14 @@ if (!isset($_SESSION['cart_session_id'])) {
     $_SESSION['cart_session_id'] = uniqid('cart_', true);
 }
 
+// Initialize form data
+$form_data = [];
+$form_restored = false;
+
 // Restore form data if returning from login
 if (isset($_SESSION['checkout_form_data'])) {
     $form_data = $_SESSION['checkout_form_data'];
+    $form_restored = true;
     unset($_SESSION['checkout_form_data']);
 }
 
@@ -146,7 +151,6 @@ $prefill_postal_code = $default_address['postal_code'] ?? '';
 
 // Handle form submission
 $errors = [];
-$form_data = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $form_data = [
@@ -296,7 +300,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 } else {
     // Form always starts empty - customer types their own info
-    $form_data = [
+    // Only fill missing keys (don't overwrite restored data)
+    $form_data = $form_data + [
         'email' => '',
         'phone' => '',
         'full_name' => '',
@@ -663,15 +668,15 @@ $countries = [
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="email">Email <span class="required">*</span></label>
-                                <input type="email" id="email" name="email" 
-                                       value="<?= htmlspecialchars($form_data['email']) ?>" 
+                                <input type="email" id="email" name="email"
+                                       value="<?= htmlspecialchars($form_data['email']) ?>"
                                        placeholder="you@example.com"
                                        required>
                             </div>
                             <div class="form-group">
                                 <label for="phone">Phone <span class="required">*</span></label>
-                                <input type="tel" id="phone" name="phone" 
-                                       value="<?= htmlspecialchars($form_data['phone']) ?>" 
+                                <input type="tel" id="phone" name="phone"
+                                       value="<?= htmlspecialchars($form_data['phone']) ?>"
                                        required>
                             </div>
                         </div>
@@ -682,38 +687,38 @@ $countries = [
                         <h2 class="checkout-section-title">Shipping Address</h2>
                         <div class="form-group">
                             <label for="full_name">Full Name <span class="required">*</span></label>
-                            <input type="text" id="full_name" name="full_name" 
-                                   value="<?= htmlspecialchars($_SERVER['REQUEST_METHOD'] === 'POST' ? $form_data['full_name'] : $prefill_full_name) ?>" 
+                            <input type="text" id="full_name" name="full_name"
+                                   value="<?= htmlspecialchars(($_SERVER['REQUEST_METHOD'] === 'POST' || $form_restored) ? $form_data['full_name'] : $prefill_full_name) ?>"
                                    placeholder="John Doe"
                                    required>
                         </div>
                         <div class="form-group">
                             <label for="address_line1">Address Line 1 <span class="required">*</span></label>
-                            <input type="text" id="address_line1" name="address_line1" 
-                                   value="<?= htmlspecialchars($_SERVER['REQUEST_METHOD'] === 'POST' ? $form_data['address_line1'] : $prefill_address_line1) ?>" 
+                            <input type="text" id="address_line1" name="address_line1"
+                                   value="<?= htmlspecialchars(($_SERVER['REQUEST_METHOD'] === 'POST' || $form_restored) ? $form_data['address_line1'] : $prefill_address_line1) ?>"
                                    placeholder="House #, Street name"
                                    required>
                         </div>
                         <div class="form-group">
                             <label for="address_line2">Address Line 2 (Optional)</label>
-                            <input type="text" id="address_line2" name="address_line2" 
-                                   value="<?= htmlspecialchars($_SERVER['REQUEST_METHOD'] === 'POST' ? $form_data['address_line2'] : $prefill_address_line2) ?>" 
+                            <input type="text" id="address_line2" name="address_line2"
+                                   value="<?= htmlspecialchars(($_SERVER['REQUEST_METHOD'] === 'POST' || $form_restored) ? $form_data['address_line2'] : $prefill_address_line2) ?>"
                                    placeholder="Apartment, floor, etc.">
                         </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="city">City <span class="required">*</span></label>
-                                <input type="text" id="city" name="city" 
-                                       value="<?= htmlspecialchars($_SERVER['REQUEST_METHOD'] === 'POST' ? $form_data['city'] : $prefill_city) ?>" 
-                                       placeholder="e.g. Karachi"
-                                       required>
+                                <input type="text" id="city" name="city"
+                                   value="<?= htmlspecialchars(($_SERVER['REQUEST_METHOD'] === 'POST' || $form_restored) ? $form_data['city'] : $prefill_city) ?>"
+                                   placeholder="e.g. Karachi"
+                                   required>
                             </div>
                             <div class="form-group">
                                 <label for="state">State/Province <span class="required">*</span></label>
-                                <input type="text" id="state" name="state" 
-                                       value="<?= htmlspecialchars($_SERVER['REQUEST_METHOD'] === 'POST' ? $form_data['state'] : $prefill_state) ?>" 
-                                       placeholder="e.g. Sindh"
-                                       required>
+                                <input type="text" id="state" name="state"
+                                   value="<?= htmlspecialchars(($_SERVER['REQUEST_METHOD'] === 'POST' || $form_restored) ? $form_data['state'] : $prefill_state) ?>"
+                                   placeholder="e.g. Sindh"
+                                   required>
                             </div>
                         </div>
                         <div class="form-row">
@@ -722,8 +727,8 @@ $countries = [
                                 <select id="country" name="country" required>
                                     <option value="">Select Country</option>
                                     <?php foreach ($countries as $country): ?>
-                                        <option value="<?= htmlspecialchars($country) ?>" 
-                                                <?= ($_SERVER['REQUEST_METHOD'] === 'POST' ? $form_data['country'] : $prefill_country) === $country ? 'selected' : '' ?>>
+                                        <option value="<?= htmlspecialchars($country) ?>"
+                                                <?= (($_SERVER['REQUEST_METHOD'] === 'POST' || $form_restored) ? $form_data['country'] : $prefill_country) === $country ? 'selected' : '' ?>>
                                             <?= htmlspecialchars($country) ?>
                                         </option>
                                     <?php endforeach; ?>
@@ -731,10 +736,10 @@ $countries = [
                             </div>
                             <div class="form-group">
                                 <label for="postal_code">Postal/Zip Code <span class="required">*</span></label>
-                                <input type="text" id="postal_code" name="postal_code" 
-                                       value="<?= htmlspecialchars($_SERVER['REQUEST_METHOD'] === 'POST' ? $form_data['postal_code'] : $prefill_postal_code) ?>" 
-                                       placeholder="e.g. 75500"
-                                       required>
+                                <input type="text" id="postal_code" name="postal_code"
+                                   value="<?= htmlspecialchars(($_SERVER['REQUEST_METHOD'] === 'POST' || $form_restored) ? $form_data['postal_code'] : $prefill_postal_code) ?>"
+                                   placeholder="e.g. 75500"
+                                   required>
                             </div>
                         </div>
                     </div>

@@ -9,6 +9,13 @@ if (is_logged_in()) {
     redirect(is_admin() ? ADMIN_URL . '/dashboard.php' : PUBLIC_URL . '/index.php');
 }
 
+// Store whitelisted redirect intent for Google login
+if (isset($_GET['redirect']) && $_GET['redirect'] === 'checkout') {
+    $_SESSION['post_login_redirect'] = 'checkout';
+} else {
+    unset($_SESSION['post_login_redirect']);
+}
+
 $errors = [];
 $old_naam = '';
 $old_email = '';

@@ -36,6 +36,15 @@ $result = handle_google_callback($pdo, $auth_code);
 
 if ($result['success']) {
     set_flash_message('success', $result['message']);
+    
+    // Check for checkout redirect intent (non-admin only)
+    $post_login_redirect = $_SESSION['post_login_redirect'] ?? null;
+    unset($_SESSION['post_login_redirect']);
+    
+    if ($post_login_redirect === 'checkout' && ($_SESSION['user_role'] ?? '') !== 'admin') {
+        redirect(PUBLIC_URL . '/checkout.php');
+    }
+    
     redirect($result['redirect']);
 } else {
     set_flash_message('error', $result['message']);
