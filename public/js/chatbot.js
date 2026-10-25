@@ -70,12 +70,12 @@
         },
         {
             keywords: ['whatsapp', 'whatsapp number', 'message on whatsapp'],
-            answer: '<a href="https://wa.me/923063888988" target="_blank" rel="noopener" class="chatbot-link">Message us on WhatsApp</a>',
+            answer: '<a href="https://wa.me/923193198080" target="_blank" rel="noopener" class="chatbot-link">Message us on WhatsApp</a>',
             type: 'static'
         },
         {
             keywords: ['social media', 'social', 'socials', 'follow you', 'social network', 'on social'],
-            answer: 'Find us on social media: <a href="https://www.facebook.com/share/1JdmTwcNar/" target="_blank" rel="noopener" class="chatbot-link">Facebook</a>, <a href="https://www.instagram.com/clicks_leather?igsh=YmkxNTJqMXlsOXB0" target="_blank" rel="noopener" class="chatbot-link">Instagram</a>, <a href="https://wa.me/923063888988" target="_blank" rel="noopener" class="chatbot-link">WhatsApp</a>',
+            answer: 'Find us on social media: <a href="https://www.facebook.com/share/1JdmTwcNar/" target="_blank" rel="noopener" class="chatbot-link">Facebook</a>, <a href="https://www.instagram.com/clicks_leather?igsh=YmkxNTJqMXlsOXB0" target="_blank" rel="noopener" class="chatbot-link">Instagram</a>, <a href="https://wa.me/923193198080" target="_blank" rel="noopener" class="chatbot-link">WhatsApp</a>',
             type: 'static'
         },
         {
