@@ -129,8 +129,19 @@ function require_active_session(): void {
  */
 function require_admin(): void {
     if (!is_admin()) {
-        set_flash_message('error', 'Access denied. Admin privileges required.');
-        redirect(PUBLIC_URL . '/login.php');
+        // Detect if current page is in admin folder
+        $current_path = $_SERVER['PHP_SELF'] ?? '';
+        $is_admin_page = strpos($current_path, '/admin/') !== false;
+        
+        // If session just expired, clear the flag and keep the session expired message
+        if (isset($_SESSION['just_expired']) && $_SESSION['just_expired'] === true) {
+            unset($_SESSION['just_expired']);
+        } else {
+            set_flash_message('error', 'Access denied. Admin privileges required.');
+        }
+        
+        $login_url = $is_admin_page ? ADMIN_URL . '/login.php' : PUBLIC_URL . '/login.php';
+        redirect($login_url);
     }
 }
 
