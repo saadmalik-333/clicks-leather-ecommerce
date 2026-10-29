@@ -9,6 +9,17 @@
     const cartCountElements = document.querySelectorAll('.cart-count');
     const cartLinks = document.querySelectorAll('.cart-link');
 
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+        const str = String(text ?? '');
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     // Open cart drawer
     function openCartDrawer() {
         cartDrawer.classList.add('active');
@@ -63,12 +74,12 @@
         let html = '';
         items.forEach(item => {
             const variantInfo = [];
-            if (item.color) variantInfo.push(`<span>Color:</span> ${item.color}`);
+            if (item.color) variantInfo.push(`<span>Color:</span> ${escapeHtml(item.color)}`);
             if (item.size_display) {
-                const displaySize = item.size_display.startsWith('Custom') ? 'Custom Size' : item.size_display;
+                const displaySize = item.size_display.startsWith('Custom') ? 'Custom Size' : escapeHtml(item.size_display);
                 variantInfo.push(`<span>Size:</span> ${displaySize}`);
             }
-            else if (item.size) variantInfo.push(`<span>Size:</span> ${item.size}`);
+            else if (item.size) variantInfo.push(`<span>Size:</span> ${escapeHtml(item.size)}`);
             
             // Price display with discount if applicable
             let priceDisplay = '';
@@ -90,9 +101,9 @@
             
             html += `
                 <div class="cart-item" data-cart-item-id="${item.cart_item_id}">
-                    <img src="${item.image_url}" alt="${item.product_name}" class="cart-item-image">
+                    <img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.product_name)}" class="cart-item-image">
                     <div class="cart-item-details">
-                        <div class="cart-item-name">${item.product_name}</div>
+                        <div class="cart-item-name">${escapeHtml(item.product_name)}</div>
                         ${variantInfo.length > 0 ? `<div class="cart-item-variant">${variantInfo.join(' • ')}</div>` : ''}
                         <div class="cart-item-bottom">
                             <div class="cart-item-quantity">

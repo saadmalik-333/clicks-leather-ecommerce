@@ -71,6 +71,79 @@ try {
         exit;
     }
     
+    // Validate custom size measurements (category-independent)
+    if ($size === 'custom') {
+        // Reject if size_display is empty
+        if (trim($size_display) === '') {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Please provide all required measurements for custom size.']);
+            exit;
+        }
+        
+        // Extract the part before " — Notes:" to avoid matching numbers in notes
+        $display_part = $size_display;
+        if (strpos($size_display, ' — Notes:') !== false) {
+            $display_part = explode(' — Notes:', $size_display)[0];
+        }
+        
+        // Try shoes format first: Custom (C:<num> A:<num> B:<num>)
+        $shoes_pattern = '/^Custom \(C:(\d+\.?\d*) A:(\d+\.?\d*) B:(\d+\.?\d*)\)\z/';
+        $matched = false;
+        
+        if (preg_match($shoes_pattern, $display_part, $matches)) {
+            $matched = true;
+            // Validate each value is > 0 and <= 200
+            foreach ([1, 2, 3] as $i) {
+                $val = floatval($matches[$i]);
+                if ($val <= 0 || $val > 200) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => 'Invalid custom size measurements. All values must be greater than 0 and not more than 200.']);
+                    exit;
+                }
+            }
+        } else {
+            // Try jackets format: Custom (Chest:<num> Shoulder:<num> Sleeve:<num> Biceps:<num> Waist:<num> Length:<num>)
+            $jackets_pattern = '/^Custom \(Chest:(\d+\.?\d*) Shoulder:(\d+\.?\d*) Sleeve:(\d+\.?\d*) Biceps:(\d+\.?\d*) Waist:(\d+\.?\d*) Length:(\d+\.?\d*)\)\z/';
+            if (preg_match($jackets_pattern, $display_part, $matches)) {
+                $matched = true;
+                // Validate each value is > 0 and <= 200
+                foreach ([1, 2, 3, 4, 5, 6] as $i) {
+                    $val = floatval($matches[$i]);
+                    if ($val <= 0 || $val > 200) {
+                        http_response_code(400);
+                        echo json_encode(['success' => false, 'message' => 'Invalid custom size measurements. All values must be greater than 0 and not more than 200.']);
+                        exit;
+                    }
+                }
+            }
+        }
+        
+        // If neither format matched
+        if (!$matched) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Invalid custom size format. Please provide all required measurements.']);
+            exit;
+        }
+        
+        // Validate Notes length (if present)
+        if (strpos($size_display, ' — Notes:') !== false) {
+            $notes_part = explode(' — Notes:', $size_display)[1];
+            $notes_length = mb_strlen(trim($notes_part), 'UTF-8');
+            if ($notes_length > 120) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Notes are too long. Please keep them under 120 characters.']);
+                exit;
+            }
+        }
+        
+        // Final safety check: total size_display must not exceed column length
+        if (mb_strlen($size_display, 'UTF-8') > 255) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Custom size information is too long. Please shorten your notes.']);
+            exit;
+        }
+    }
+    
     // Get applicable discount for this product
     $discount = get_product_discount($pdo, $product_id, $product['category_id']);
     $discount_percent = $discount ? $discount['discount_percent'] : 0;

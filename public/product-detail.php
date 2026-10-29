@@ -1815,7 +1815,7 @@ $display_description = !empty($product['detail_description']) ? $product['detail
                 
                 <div class="measurement-notes">
                     <label class="measurement-label">Notes (optional)</label>
-                    <textarea class="measurement-textarea" placeholder="Any other detail — wide feet, high arch, etc."></textarea>
+                    <textarea class="measurement-textarea" maxlength="120" placeholder="Any other detail — wide feet, high arch, etc."></textarea>
                 </div>
                 
                 <button class="btn btn-primary btn-full" id="save-shoe-measurements">Save Custom Measurements</button>
@@ -1924,7 +1924,7 @@ $display_description = !empty($product['detail_description']) ? $product['detail
             
             <div class="measurement-notes">
                 <label class="measurement-label">Notes (optional)</label>
-                <textarea class="measurement-textarea" placeholder="Anything else we should know — broad shoulders, prefer looser fit, etc."></textarea>
+                <textarea class="measurement-textarea" maxlength="120" placeholder="Anything else we should know — broad shoulders, prefer looser fit, etc."></textarea>
             </div>
             
             <button class="btn btn-primary btn-full" id="save-custom-measurements">Save Custom Measurements</button>
@@ -2887,50 +2887,75 @@ $display_description = !empty($product['detail_description']) ? $product['detail
             // Custom Size button (Shoes modal)
             if (sizeCustomBtn) {
                 sizeCustomBtn.addEventListener('click', function() {
+                    // Remove any existing error message
+                    if (saveShoeMeasurementsBtn) {
+                        const existingError = saveShoeMeasurementsBtn.parentElement.querySelector('.flash-message');
+                        if (existingError) existingError.remove();
+                    }
                     showStep3();
                 });
             }
             
             // Validate C input (Step 2)
             const measurementC = document.getElementById('shoe-measurement-c');
-            if (measurementC) {
-                measurementC.addEventListener('input', function() {
-                    const value = parseFloat(this.value);
-                    const isValid = value && value > 0;
-                    // Enable/disable any next button if needed (not used in single-panel structure)
-                });
-            }
             
             // Validate A and B inputs (Step 3)
             const measurementA = document.getElementById('shoe-measurement-a');
             const measurementB = document.getElementById('shoe-measurement-b');
             const saveShoeMeasurementsBtn = document.getElementById('save-shoe-measurements');
             
-            function validateShoeMeasurements() {
-                const aValid = measurementA && measurementA.value && parseFloat(measurementA.value) > 0;
-                const bValid = measurementB && measurementB.value && parseFloat(measurementB.value) > 0;
-                
-                if (saveShoeMeasurementsBtn) {
-                    saveShoeMeasurementsBtn.disabled = !(aValid && bValid);
+            // Remove error message when user starts editing
+            [measurementC, measurementA, measurementB].forEach(function(input) {
+                if (input) {
+                    input.addEventListener('input', function() {
+                        if (saveShoeMeasurementsBtn) {
+                            const existingError = saveShoeMeasurementsBtn.parentElement.querySelector('.flash-message');
+                            if (existingError) existingError.remove();
+                        }
+                    });
                 }
-            }
-            
-            if (measurementA) {
-                measurementA.addEventListener('input', validateShoeMeasurements);
-            }
-            if (measurementB) {
-                measurementB.addEventListener('input', validateShoeMeasurements);
-            }
-            if (saveShoeMeasurementsBtn) {
-                saveShoeMeasurementsBtn.disabled = true; // Initially disabled
-            }
+            });
             
             // Save shoe measurements
             if (saveShoeMeasurementsBtn) {
                 saveShoeMeasurementsBtn.addEventListener('click', function() {
-                    const c = measurementC ? measurementC.value : '';
-                    const a = measurementA ? measurementA.value : '';
-                    const b = measurementB ? measurementB.value : '';
+                    // Validate all fields before saving (double-check)
+                    const cVal = measurementC ? measurementC.value.trim() : '';
+                    const aVal = measurementA ? measurementA.value.trim() : '';
+                    const bVal = measurementB ? measurementB.value.trim() : '';
+                    
+                    const cNum = parseFloat(cVal);
+                    const aNum = parseFloat(aVal);
+                    const bNum = parseFloat(bVal);
+                    
+                    const cValid = cVal && !isNaN(cNum) && cNum > 0 && cNum <= 200;
+                    const aValid = aVal && !isNaN(aNum) && aNum > 0 && aNum <= 200;
+                    const bValid = bVal && !isNaN(bNum) && bNum > 0 && bNum <= 200;
+                    
+                    if (!cValid || !aValid || !bValid) {
+                        // Show error message using existing CSS class
+                        const errorMsg = document.createElement('div');
+                        errorMsg.className = 'flash-message flash-error';
+                        errorMsg.textContent = 'Please fill in all measurement fields with valid values greater than 0 and not more than 200.';
+                        
+                        // Remove existing error if any
+                        const existingError = saveShoeMeasurementsBtn.parentElement.querySelector('.flash-message');
+                        if (existingError) existingError.remove();
+                        
+                        saveShoeMeasurementsBtn.parentElement.appendChild(errorMsg);
+                        
+                        // Focus first empty field
+                        if (!cValid && measurementC) measurementC.focus();
+                        else if (!aValid && measurementA) measurementA.focus();
+                        else if (!bValid && measurementB) measurementB.focus();
+                        
+                        return;
+                    }
+                    
+                    // Round to 2 decimals for consistency with server regex
+                    const c = Math.round(cNum * 100) / 100;
+                    const a = Math.round(aNum * 100) / 100;
+                    const b = Math.round(bNum * 100) / 100;
                     const notes = document.querySelector('.measurement-textarea').value;
                     
                     // Construct size_display
@@ -3021,6 +3046,11 @@ $display_description = !empty($product['detail_description']) ? $product['detail
             if (customSizeBtn) {
                 customSizeBtn.addEventListener('click', function(e) {
                     e.preventDefault();
+                    // Remove any existing error message
+                    if (saveBtn) {
+                        const existingError = saveBtn.parentElement.querySelector('.flash-message');
+                        if (existingError) existingError.remove();
+                    }
                     openCustomMeasurementsModal();
                 });
             }
@@ -3037,16 +3067,62 @@ $display_description = !empty($product['detail_description']) ? $product['detail
                 overlay.addEventListener('click', closeCustomMeasurementsModal);
             }
             
+            // Add error-removal listeners to all measurement inputs (outside Save handler)
+            document.querySelectorAll('.measurement-input').forEach(function(input) {
+                input.addEventListener('input', function() {
+                    if (saveBtn) {
+                        const existingError = saveBtn.parentElement.querySelector('.flash-message');
+                        if (existingError) existingError.remove();
+                    }
+                });
+            });
+            
             if (saveBtn) {
                 saveBtn.addEventListener('click', function() {
                     const measurements = {};
+                    const requiredFields = ['chest', 'shoulder', 'sleeve', 'biceps', 'waist', 'length'];
+                    let firstEmptyInput = null;
+                    let allValid = true;
+                    
                     document.querySelectorAll('.measurement-input').forEach(function(input) {
                         const field = input.dataset.field;
-                        const value = input.value;
-                        if (field && value) {
+                        const value = input.value.trim();
+                        
+                        if (requiredFields.includes(field)) {
+                            const numVal = parseFloat(value);
+                            if (!value || isNaN(numVal) || numVal <= 0 || numVal > 200) {
+                                allValid = false;
+                                if (!firstEmptyInput) firstEmptyInput = input;
+                            }
+                        }
+                        
+                        if (field && value && !isNaN(parseFloat(value)) && parseFloat(value) > 0 && parseFloat(value) <= 200) {
                             measurements[field] = parseFloat(value);
                         }
                     });
+                    
+                    if (!allValid) {
+                        // Show error message using existing CSS class
+                        const errorMsg = document.createElement('div');
+                        errorMsg.className = 'flash-message flash-error';
+                        errorMsg.textContent = 'Please fill in all measurement fields with valid values greater than 0 and not more than 200.';
+                        
+                        // Remove existing error if any
+                        const existingError = saveBtn.parentElement.querySelector('.flash-message');
+                        if (existingError) existingError.remove();
+                        
+                        saveBtn.parentElement.appendChild(errorMsg);
+                        
+                        // Focus first empty field
+                        if (firstEmptyInput) firstEmptyInput.focus();
+                        
+                        return;
+                    }
+                    
+                    // Round to 2 decimals for consistency with server regex
+                    for (const key in measurements) {
+                        measurements[key] = Math.round(measurements[key] * 100) / 100;
+                    }
                     
                     const notes = document.querySelector('.measurement-textarea').value;
                     if (notes) {
