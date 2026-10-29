@@ -1,6 +1,18 @@
 /**
  * Product Search Functionality
  */
+
+// Escape HTML to prevent XSS
+function escapeSearchText(text) {
+    const str = String(text ?? '');
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const searchIcon = document.getElementById('search-icon');
     const searchDropdown = document.getElementById('search-dropdown');
@@ -84,10 +96,10 @@ document.addEventListener('DOMContentLoaded', function() {
             html += `
                 <a href="${product.url}" class="search-result-item">
                     <div class="search-result-image">
-                        ${product.image ? `<img src="${product.image}" alt="${product.name}">` : '<div class="no-image">No image</div>'}
+                        ${product.image ? `<img src="${escapeSearchText(product.image)}" alt="${escapeSearchText(product.name)}">` : '<div class="no-image">No image</div>'}
                     </div>
                     <div class="search-result-info">
-                        <div class="search-result-name">${product.name}</div>
+                        <div class="search-result-name">${escapeSearchText(product.name)}</div>
                         <div class="search-result-price">${product.price}</div>
                     </div>
                 </a>
