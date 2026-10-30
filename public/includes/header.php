@@ -74,7 +74,6 @@ require_active_session();
                 </div>
             </div>
             
-            <a href="#newsletter" class="btn btn-primary btn-sm subscribe-btn">SUBSCRIBE AND GET 10% OFF</a>
         </div>
     </header>
 
