@@ -1583,8 +1583,8 @@ $display_description = !empty($product['detail_description']) ? $product['detail
                         <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
                     </svg>
                 </div>
-                <div class="trust-bar-label">Easy Returns</div>
-                <div class="trust-bar-subtitle">Hassle Free</div>
+                <div class="trust-bar-label">14-Day Returns</div>
+                <div class="trust-bar-subtitle">See return policy</div>
             </div>
             <div class="trust-bar-item">
                 <div class="trust-bar-icon-wrapper">
@@ -1592,8 +1592,8 @@ $display_description = !empty($product['detail_description']) ? $product['detail
                         <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
                     </svg>
                 </div>
-                <div class="trust-bar-label">24/7 Support</div>
-                <div class="trust-bar-subtitle">We're Here to Help</div>
+                <div class="trust-bar-label">Customer Support</div>
+                <div class="trust-bar-subtitle">Reply within 24-48 hours</div>
             </div>
         </div>
     </section>
