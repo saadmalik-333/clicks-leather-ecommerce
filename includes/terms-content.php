@@ -3,10 +3,10 @@
  * Terms & Conditions Content Partial
  * Used by terms-and-conditions.php and other policy pages for cross-page accordion
  */
-$legal_name      = '[Clicks Leather]';
-$support_email   = '[SUPPORT EMAIL]';
+$legal_name      = 'Clicks Leather';
+$support_email   = 'clicksleather@gmail.com';
 $business_address = '';   // leave empty; if empty, do not show the address line
-$last_updated    = '[EFFECTIVE DATE]';
+$last_updated    = 'October 30, 2026';
 ?>
 <div class="policy-section standard">
     <h2>Terms & Conditions</h2>
