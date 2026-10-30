@@ -41,6 +41,15 @@ $hero_description = get_setting($pdo, 'hero_description', 'Discover our collecti
     <meta property="og:url" content="<?= PUBLIC_URL ?>/index.php">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
+    <script type="application/ld+json">
+    <?= json_encode([
+        '@context' => 'https://schema.org',
+        '@type' => 'WebSite',
+        'name' => 'Clicks Leather',
+        'alternateName' => ['ClicksLeather'],
+        'url' => SITE_URL . '/'
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>
+    </script>
 </head>
 <body>
     <?php include PUBLIC_PATH . '/includes/header.php'; ?>
