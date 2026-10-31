@@ -45,7 +45,7 @@
         },
         {
             keywords: ['shipping time', 'delivery time', 'how long', 'when will i get', 'delivery', 'timeline', 'days', 'when will it arrive', 'when will i receive', 'get my order', 'arrive', 'receive', 'how many days', 'delivery date', 'shipping duration', 'how long shipping', 'shipping days', 'delivery days', 'weeks', 'shipping policy', 'shipping information', 'about shipping', 'tell me about shipping'],
-            answer: 'Total delivery time is 14-15 days. This includes 4-6 days for manufacturing/handcrafting your order, plus 8-10 days for international shipping to your location. We offer worldwide shipping to most countries.',
+            answer: 'Total delivery time is 14-15 days. This includes 4-6 days for manufacturing/handcrafting your order, plus 8-10 days for international shipping to your location. Wallets are the exception: they are dispatched within 1-2 days of your order, so they reach you sooner. We offer worldwide shipping to most countries.',
             type: 'static'
         },
         {

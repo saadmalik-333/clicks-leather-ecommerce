@@ -6,7 +6,7 @@
 $legal_name      = 'Clicks Leather';
 $support_email   = 'clicksleather@gmail.com';
 $business_address = '';   // leave empty; if empty, do not show the address line
-$last_updated    = 'October 30, 2026';
+$last_updated    = 'November 1, 2026';
 ?>
 <div class="policy-section standard">
     <h2>Terms & Conditions</h2>
@@ -30,7 +30,7 @@ $last_updated    = 'October 30, 2026';
 
 <div class="policy-section standard">
     <h2>4. Prices and shipping fees</h2>
-    <p>All prices are shown in US dollars (USD) and may change without notice. The price you pay is the price shown when you place your order. Any shipping fee is shown at checkout; we may offer free shipping for a limited time, as described on our Shipping Info page. Orders shipped internationally may be subject to customs duties, import taxes or handling fees charged by your country. These charges are not included in our prices and are the customer's responsibility.</p>
+    <p>All prices are shown in US dollars (USD) and may change without notice. The price you pay is the price shown when you place your order. Any shipping fee is shown at checkout; we may offer free shipping for a limited time, as described on our Shipping Info page. Customs duties and import taxes on international orders are paid by Clicks Leather. You will not be asked to pay them on delivery.</p>
 </div>
 
 <div class="policy-section standard">

@@ -26,7 +26,7 @@
             <div class="timeline-number">2</div>
             <div class="timeline-content">
                 <h3>Manufacturing</h3>
-                <p>4-6 days — Your item is handcrafted to order.</p>
+                <p>4-6 days — Your item is handcrafted to order. Wallets are the exception: they are dispatched within 1-2 days of your order, so they reach you sooner.</p>
             </div>
         </div>
 

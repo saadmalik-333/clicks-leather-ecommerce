@@ -753,7 +753,7 @@ $countries = [
                                        style="margin-right: 0.75rem;">
                                 <div>
                                     <strong><?= $shipping_is_free === 'yes' ? 'Free Worldwide Shipping' : 'Standard Shipping - ' . format_price($shipping_cost) ?></strong>
-                                    <div style="font-size: 0.9rem; color: var(--text-secondary);">Estimated delivery: 7-14 business days</div>
+                                    <div style="font-size: 0.9rem; color: var(--text-secondary);">Estimated delivery: 14-15 days</div>
                                 </div>
                             </label>
                         </div>
