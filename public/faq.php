@@ -154,7 +154,7 @@ require_once INCLUDES_PATH . '/functions.php';
 
                 <div class="faq-item">
                     <div class="faq-question">Are your products made-to-order?</div>
-                    <div class="faq-answer">Yes, each piece is handcrafted and made to order. This ensures every item meets our quality standards and is crafted specifically for you.</div>
+                    <div class="faq-answer">Yes, most pieces are handcrafted and made to order. This ensures every item meets our quality standards and is crafted specifically for you.</div>
                 </div>
 
                 <div class="faq-item">

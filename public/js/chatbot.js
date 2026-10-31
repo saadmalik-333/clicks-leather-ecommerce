@@ -20,7 +20,7 @@
         },
         {
             keywords: ['made to order', 'made-to-order', 'custom made', 'handmade', 'handcrafted', 'production time', 'how long to make', 'how long does it take', 'manufacturing', 'crafting', 'production', 'make time'],
-            answer: 'Yes, each piece is handcrafted and made to order. This ensures every item meets our quality standards and is crafted specifically for you.',
+            answer: 'Yes, most pieces are handcrafted and made to order. This ensures every item meets our quality standards and is crafted specifically for you.',
             type: 'static'
         },
         {

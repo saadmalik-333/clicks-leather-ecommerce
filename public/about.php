@@ -242,7 +242,7 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
                 </div>
                 <div class="split-text">
                     <h2 class="section-heading">Made For You</h2>
-                    <p class="section-text">Each piece is handcrafted and made to order. This ensures every item meets our quality standards and is crafted specifically for you.</p>
+                    <p class="section-text">Most pieces are handcrafted and made to order. This ensures every item meets our quality standards and is crafted specifically for you.</p>
                     <p class="section-text" style="margin-top: var(--space-lg);">We offer laser engraving customization for personalization. Contact us before placing your order to discuss customization options and make your piece truly unique.</p>
                 </div>
             </div>
